@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>雅思阅读 · 同义替换练习</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+    background: #f5f4f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+  .page-header {
+    background: #fff;
+    border-bottom: 0.5px solid rgba(0,0,0,0.1);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-badge {
+    width: 36px; height: 36px;
+    background: #534AB7;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 18px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+  .page-header h1 { font-size: 16px; font-weight: 500; }
+  .page-header p { font-size: 12px; color: #888; margin-top: 2px; }
+
+  .container {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  /* Stats bar */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .stat-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+    border: 0.5px solid rgba(0,0,0,0.08);
+  }
+  .stat-num { font-size: 24px; font-weight: 500; color: #1a1a1a; }
+  .stat-lbl { font-size: 11px; color: #888; margin-top: 3px; }
+  .stat-num.purple { color: #534AB7; }
+  .stat-num.green  { color: #1D9E75; }
+  .stat-num.red    { color: #E24B4A; }
+
+  /* Progress */
+  .progress-wrap { margin-bottom: 18px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-bottom: 6px; }
+  .progress-bar { height: 7px; background: rgba(0,0,0,0.08); border-radius: 4px; overflow: hidden; }
+  .progress-fill { height: 100%; background: #534AB7; border-radius: 4px; transition: width 0.4s ease; }
+
+  /* Status hint */
+  .status-hint {
+    background: #EEEDFE;
+    border: 0.5px solid #AFA9EC;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #3C3489;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+
+  /* Word grid */
+  .words-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+  .word-btn {
+    padding: 7px 14px;
+    border: 0.5px solid rgba(0,0,0,0.15);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    background: #fff;
+    color: #1a1a1a;
+    transition: all 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .word-btn:hover:not(:disabled):not(.used) {
+    border-color: #534AB7;
+    color: #534AB7;
+    background: #EEEDFE;
+  }
+  .word-btn.anchor {
+    background: #534AB7;
+    color: #fff;
+    border-color: #534AB7;
+  }
+  .word-btn.correct {
+    background: #1D9E75;
+    color: #fff;
+    border-color: #1D9E75;
+  }
+  .word-btn.wrong {
+    background: #E24B4A;
+    color: #fff;
+    border-color: #E24B4A;
+    animation: shake 0.35s;
+  }
+  .word-btn.used {
+    opacity: 0.28;
+    text-decoration: line-through;
+    cursor: default;
+  }
+  .word-btn:disabled { cursor: default; }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  /* Chain box */
+  .chain-box {
+    background: #fff;
+    border: 0.5px solid rgba(0,0,0,0.1);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+    display: none;
+  }
+  .chain-box.show { display: block; }
+  .chain-label { font-size: 11px; color: #888; margin-bottom: 8px; }
+  .chain-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chain-tag {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+  }
+  .chain-tag.anchor-tag { background: #534AB7; color: #fff; }
+  .chain-tag.correct-tag { background: #1D9E75; color: #fff; }
+
+  /* Feedback */
+  .feedback-box {
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+    line-height: 1.5;
+  }
+  .feedback-box.show { display: block; }
+  .feedback-box.ok { background: #E1F5EE; color: #0F6E56; border: 0.5px solid #5DCAA5; }
+  .feedback-box.err { background: #FCEBEB; color: #A32D2D; border: 0.5px solid #F09595; }
+  .feedback-box.info { background: #E6F1FB; color: #0C447C; border: 0.5px solid #85B7EB; }
+
+  /* Action buttons */
+  .action-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .action-row.show { display: flex; }
+  .btn-primary {
+    padding: 9px 22px;
+    background: #534AB7;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-primary:hover { background: #4038a0; }
+  .btn-outline {
+    padding: 9px 22px;
+    background: #fff;
+    color: #555;
+    border: 0.5px solid rgba(0,0,0,0.18);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-outline:hover { border-color: #888; }
+
+  /* Completed groups */
+  .completed-section { margin-top: 4px; }
+  .done-group {
+    background: #E1F5EE;
+    border: 0.5px solid #9FE1CB;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+  .done-group-num {
+    font-size: 11px;
+    color: #0F6E56;
+    background: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 0.5px solid #9FE1CB;
+    flex-shrink: 0;
+  }
+  .done-word {
+    font-size: 12px;
+    color: #0F6E56;
+    padding: 2px 9px;
+    background: #fff;
+    border-radius: 10px;
+    border: 0.5px solid #9FE1CB;
+  }
+  .missed-word {
+    font-size: 12px;
+    color: #999;
+    padding: 2px 9px;
+    background: #f5f5f5;
+    border-radius: 10px;
+    border: 0.5px solid #ddd;
+    text-decoration: line-through;
+  }
+
+  /* End screen */
+  #endScreen {
+    display: none;
+    text-align: center;
+    padding: 40px 20px;
+    background: #fff;
+    border-radius: 16px;
+    border: 0.5px solid rgba(0,0,0,0.08);
+  }
+  #endScreen.show { display: block; }
+  .end-round { font-size: 12px; color: #888; margin-bottom: 8px; }
+  .end-score { font-size: 48px; font-weight: 500; color: #534AB7; margin-bottom: 4px; }
+  .end-detail { font-size: 13px; color: #888; margin-bottom: 28px; line-height: 1.7; }
+  .end-btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    .stats-row { grid-template-columns: repeat(2, 1fr); }
+    .word-btn { font-size: 12px; padding: 6px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="logo-badge">雅</div>
+  <div>
+    <h1>雅思阅读 · 同义替换练习</h1>
+    <p>来源：200雅思阅读高分定位匹配替换词</p>
+  </div>
+</div>
+
+<div class="container">
+  <div id="mainArea">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num purple" id="sDone">0/10</div>
+        <div class="stat-lbl">已完成组</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="sTotal">—</div>
+        <div class="stat-lbl">本轮词数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num green" id="sRight">0</div>
+        <div class="stat-lbl">正确</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num red" id="sWrong">0</div>
+        <div class="stat-lbl">错误</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span id="progressText">第 1 轮 · 随机抽取 10 组</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="status-hint" id="statusHint">点击任意单词开始练习 — 它将成为这一轮的参照词</div>
+
+    <div class="words-grid" id="wordsGrid"></div>
+
+    <div class="chain-box" id="chainBox">
+      <div class="chain-label">当前同义链（参照词 + 已找到的同义词）</div>
+      <div class="chain-tags" id="chainTags"></div>
+    </div>
+
+    <div class="feedback-box" id="feedbackBox"></div>
+
+    <div class="action-row" id="actionRow">
+      <button class="btn-outline" onclick="skipGroup()">放弃这组，显示答案</button>
+      <button class="btn-primary" onclick="confirmGroup()">这组已找完，继续 →</button>
+    </div>
+
+    <div class="completed-section" id="completedSection"></div>
+  </div>
+
+  <div id="endScreen">
+    <div class="end-round" id="endRound"></div>
+    <div class="end-score" id="endScore"></div>
+    <div class="end-detail" id="endDetail"></div>
+    <div class="end-btn-row">
+      <button class="btn-primary" onclick="startGame()">换10组再练一次</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  词库：从《200雅思阅读高分定位匹配替换词》PDF 整理
+//  格式：每个数组是一个同义替换组，第一个元素是"核心词"
+// ============================================================
+const ALL_GROUPS = [
+  // 熟词僻义组
+  ["account","description","describe"],
+  ["minute","very small","tiny","microscopic"],
+  ["fast","stop eating","abstain from food"],
+  ["coat","a layer of","cover","coating"],
+  ["digit","finger","toe"],
+  ["produce","agricultural products","things connected with farming","crops"],
+  ["fine","punishment","penalty","made of very small grains"],
+  ["sound","reliable","sensible","good condition","healthy"],
+  ["ground","small pieces of solid matter","sediment","residue"],
+  ["Act","law","regulation","legislation"],
+  ["coin","first used","invent","originate"],
+  ["lead","a chemical element","metal"],
+  ["successive","consecutive","sequent","one after another"],
+  ["belief","opinion","view","perspective"],
+  ["manage","succeed in doing","achieve","accomplish"],
+  ["undesirable","harmful","unwanted","detrimental"],
+  ["likelihood","probability","possibility","chance"],
+  ["film","thin sheet","thin layer","coating"],
+  ["novel","new","unusual","unique","original"],
+  ["deliver","realize","achieve","accomplish","make happen"],
+
+  // 题干逻辑替换组
+  ["early","previous","ancient","before","ago"],
+  ["now","today","nowadays","current","recently","at present","present-day"],
+  ["future","further","prediction","in future decades","new development"],
+  ["specific","exact","particular","certain"],
+  ["figures","number","proportion","percentage","statistics"],
+  ["environment","CO2 emissions","conservation","energy concerns","carbon footprint","green issues"],
+
+  // 超高频必会考点词
+  ["because","as","since","for","owing to","on account of","in that"],
+  ["so","hence","thus","therefore","as a result","consequently"],
+  ["way","method","approach","means","technique"],
+  ["and","as well as","both and","not only but also","besides","in addition","also"],
+  ["cause","lead to","result in","contribute to","account for","give rise to","trigger","spark off"],
+  ["money","charging","cost","price","financial","economic","value","profit"],
+  ["problems","challenges","difficulties","hurdles","risks","dilemmas","pitfalls"],
+  ["called","known as","named","referred to","act as"],
+  ["look like","resemble","be similar to","like"],
+  ["for example","for instance","such as","including","namely","e.g."],
+  ["stop","curb","halt","prevent","prohibit","restrict","restrain","inhibit","hinder","obstruct"],
+  ["conditions","factors","situations","aspects"],
+  ["decline","turn down","refuse","reject"],
+  ["recognize","admit","identify","perceive","acknowledge","understand","realize"],
+  ["copy","imitation","mimic","replicate","duplicate","follow"],
+  ["poor","deprived","socially-disadvantaged","vulnerable"],
+  ["new","recently","fresh","put forward"],
+  ["disease","illness","disorder","ailments","sickness","malady","health problem"],
+  ["change","become different","vary","alter","adjust","shift"],
+  ["idea","inspiration","conceive of","theory"],
+  ["fail to","without","not do","be unable to"],
+  ["food","agriculture","crops","farming","fodder","diet"],
+  ["suit","in keeping with","according to","fit","agree with"],
+  ["track","path","road","route"],
+  ["feed on","eat","consume","prey on"],
+  ["measure","calculate","assess","evaluate","estimate"],
+  ["ignore","neglect","overlook","pay no attention","fail to take into account"],
+  ["traditional","conventional","normal and ordinary","well-known"],
+
+  // 高频核心考点词
+  ["sustainable","environmental","ecology","long-term","chronic"],
+  ["complex","complicated","perplexing","confusing","sophisticated"],
+  ["vessels","ships","large boats","artifacts","ornaments"],
+  ["classify","categorize","be divided into","taxonomy","identify"],
+  ["contrast","rather than","instead of","two opposing views"],
+  ["predict","prediction","projection","forecast"],
+  ["weaknesses","bad aspects","disadvantages","drawbacks","demerits"],
+  ["strengths","good aspects","advantages","merits"],
+  ["discard","abandon","being left behind","disposed of","cast off","get rid of"],
+  ["personality","character","trait","temperament"],
+  ["warning","cautionary","convince against"],
+  ["consult","ask for advice","discuss with","confer"],
+  ["emerge","appear","become visible","come into view","come out"],
+  ["criteria","standard","level","norm","benchmark"],
+  ["domain","area","field","subject","discipline"],
+  ["evidence","clues","facts or signs","occurrence"],
+  ["distinct","different","differ from","distinguish","diverse"],
+  ["release","issue","launch","publish"],
+  ["maintain","ensure","remain","keep","continue to"],
+  ["incident","events","happening","occurrence"],
+  ["damp","wet","moist","humid","soaked"],
+  ["foster","cultivate","raise","nurture","rear","look after"],
+  ["extinct","die out","disappear","vanish","no longer exist"],
+  ["escape","avoid","steer clear of","keep away","elude"],
+  ["advertising","marketing","commercial","promotion"],
+  ["mixture","combination","blending","integration","merge","incorporate"],
+  ["limitation","restriction","limit","not enough freedom"],
+  ["community","a cross-section of society","general public"],
+  ["emotions","anxiety","feelings","sentimental"],
+  ["livestock","animals","sheep","cattle"],
+  ["welfare","well-being","general health","standard of living"],
+  ["inadequate","limited","not enough","too little","scarce","insufficient","shortage"],
+  ["precipitation","rainfall","snowfall","hail"],
+  ["independent","self-reliant","depend on themselves"],
+  ["obey","comply with","abide by"],
+  ["distrust","suspicion","disbelief","skeptical"],
+  ["beneficial","positive aspects","favorable","advantageous"],
+  ["civil","municipal","metropolitan","urban","public"],
+  ["productive","creative","inspiring","active","fruitful","profitable"],
+  ["fatigue","tiredness","exhausted"],
+  ["juvenile","small","young","tiny","cubs"],
+  ["fundamental","rudimentary","preliminary","basic"],
+  ["initial","at first","start","early on","premiere"],
+  ["defect","disadvantage","shortage","downside","weakness"],
+  ["feasible","practical","attainable","workable"],
+  ["urge","desire","impulse","instinct"],
+  ["artificial","synthetic","man-made"],
+  ["detect","find","discover","notice","perceive","recognize"],
+  ["threaten","warn","endanger","jeopardise","risk","intimidate"],
+  ["exchange","swap and share","switch","trade"],
+  ["separate","divide","move apart","segregate"],
+  ["analyse","look at","examine","inspect"],
+  ["overcome","conquer","get over","prevent"],
+  ["priority","most important","preferential","preference"],
+  ["exclusive","unique","sole","only","restricted"],
+  ["accessible","easy to reach","reachable","attainable","obtainable"],
+  ["alternative","unlike standard","different from the usual","unconventional"],
+
+  // 中频高分考点词
+  ["alien","not local","not native","outsider","not indigenous"],
+  ["contradict","paradoxical","refute","dispute"],
+  ["etiquette","good manner","polite","politeness","respect"],
+  ["evaporate","disappear","fade away","vanish","become less"],
+  ["exaggerate","overstate","magnify"],
+  ["prestige","symbol of status","social position","reputation"],
+  ["implications","hidden effects","consequence","suggests"],
+  ["hygiene","cleanliness","keep clean"],
+  ["chaos","panic","uncontrolled","a state of disorder"],
+  ["scrutiny","close examination","careful examination"],
+  ["obsession","excessive focus on","fixation"],
+  ["mortality rate","death rate","fatality rate"],
+  ["fragile","delicate","vulnerable","unstable","weak"],
+  ["succumb","give in","submit","yield","surrender","cave in"],
+  ["folklore","traditional customs","widespread ideas","common beliefs"],
+  ["undisputed","undeniable","unquestionable","beyond doubt"],
+  ["transparent","easy to comprehend","open and honest","clear"],
+  ["congregate","gather together","assemble"],
+  ["incentive","motive","stimulus","motivation"],
+  ["mitigate","decrease","reduce","ease off","lessen","dampen"],
+  ["innate","built-in","inborn","natural"],
+  ["confidential","hidden","secret","undisclosed"],
+  ["alleviate","decrease","ease","relieve","reduce"],
+  ["symbiotic","partnership","mutually beneficial","interdependent"],
+  ["individual","one-on-one","personal","private"],
+  ["indigenous","local","native","original","endemic"],
+  ["peripheral","unimportant","minor","marginal","fringe"],
+  ["phase out","gradually eliminate","gradually abolish","remove over time"],
+  ["initiative","scheme","project","program","plan"],
+  ["vicinity","nearby","neighborhood","close by"],
+  ["imperative","pressing","crucial","critical","urgent","vital","obligation"],
+  ["proliferate","multiply","increase","breed","reproduce","spread"],
+  ["homogeneous","uniform","consistent","identical","similar"],
+  ["address","cope with","deal with","tackle","take care of","handle"],
+  ["worldwide","global","international","around the world"],
+  ["understand","interpret","comprehend","follow","grasp"],
+  ["control","master","harness","manipulate","engage"],
+  ["data","information","statistics","figures"],
+  ["back","support","advocate","sponsor","endorse"],
+  ["store","lock in","accumulate","collect","gather","hoard","keep"],
+  ["carry out","fulfill","accomplish","perform","execute","implement"],
+  ["based on","have its origins in","have its roots in","derive from","evolve from"],
+  ["thanks to","owing to","due to","stem from","because of"],
+  ["depend on","rely on","count on","be dependent on"],
+  ["ordinary people","people","inhabitants","the public","men and women"],
+  ["be more likely to","be prone to","be liable to","be inclined to"],
+];
+
+// ============================================================
+//  Game state
+// ============================================================
+let round = 0;
+let rightCount = 0, wrongCount = 0, groupsDone = 0;
+let activeGroups = [], allWords = [], wordToGroup = {};
+let anchorGroupIdx = null, currentChain = [], usedWords = new Set();
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  round++;
+  rightCount = 0; wrongCount = 0; groupsDone = 0;
+  anchorGroupIdx = null; currentChain = []; usedWords = new Set();
+
+  // 随机抽取10组
+  const indices = shuffle([...Array(ALL_GROUPS.length).keys()]).slice(0, 10);
+  activeGroups = indices.map(i => ALL_GROUPS[i]);
+
+  allWords = [];
+  wordToGroup = {};
+  activeGroups.forEach((grp, gi) => {
+    grp.forEach(w => {
+      allWords.push(w);
+      wordToGroup[w] = gi;
+    });
+  });
+  allWords = shuffle(allWords);
+
+  // 重置 UI
+  document.getElementById('endScreen').classList.remove('show');
+  document.getElementById('mainArea').style.display = '';
+  document.getElementById('completedSection').innerHTML = '';
+  document.getElementById('chainBox').classList.remove('show');
+  document.getElementById('actionRow').classList.remove('show');
+  hideFeedback();
+
+  document.getElementById('progressText').textContent = `第 ${round} 轮 · 随机抽取 10 组`;
+  document.getElementById('sTotal').textContent = allWords.length;
+
+  renderGrid();
+  updateStats();
+  setHint('点击任意单词开始练习 — 它将成为这一轮的参照词', '');
+}
+
+function renderGrid() {
+  const grid = document.getElementById('wordsGrid');
+  grid.innerHTML = '';
+  allWords.forEach(w => {
+    const btn = document.createElement('button');
+    btn.className = 'word-btn' + (usedWords.has(w) ? ' used' : '');
+    btn.id = 'wb_' + CSS.escape(w);
+    btn.textContent = w;
+    if (usedWords.has(w)) {
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', () => handleWordClick(w));
+    }
+    grid.appendChild(btn);
+  });
+}
+
+function getBtn(w) {
+  return document.getElementById('wb_' + CSS.escape(w));
+}
+
+function handleWordClick(word) {
+  if (usedWords.has(word)) return;
+  const gi = wordToGroup[word];
+
+  if (anchorGroupIdx === null) {
+    // 选定参照词
+    anchorGroupIdx = gi;
+    currentChain = [word];
+    const btn = getBtn(word);
+    btn.classList.add('anchor');
+    btn.disabled = true;
+
+    document.getElementById('chainBox').classList.add('show');
+    document.getElementById('actionRow').classList.add('show');
+    renderChain();
+    setHint(`"${word}" 已选为参照词，找出网格中所有与它同义的词！`, 'info');
+    hideFeedback();
+  } else {
+    if (gi === anchorGroupIdx) {
+      // 正确
+      rightCount++;
+      currentChain.push(word);
+      const btn = getBtn(word);
+      btn.classList.add('correct');
+      btn.disabled = true;
+      renderChain();
+
+      const remaining = activeGroups[anchorGroupIdx].filter(
+        w => !usedWords.has(w) && !currentChain.includes(w)
+      );
+      if (remaining.length === 0) {
+        showFeedback('这组同义词已全部找到！点击"这组已找完，继续"。', 'ok');
+      } else {
+        showFeedback(`正确！还有 ${remaining.length} 个同义词待发现。`, 'ok');
+      }
+    } else {
+      // 错误
+      wrongCount++;
+      const btn = getBtn(word);
+      btn.classList.add('wrong');
+      setTimeout(() => btn.classList.remove('wrong'), 400);
+      showFeedback(`"${word}" 不属于这组，继续找！`, 'err');
+    }
+    updateStats();
+  }
+}
+
+function renderChain() {
+  const c = document.getElementById('chainTags');
+  c.innerHTML = '';
+  currentChain.forEach((w, i) => {
+    const t = document.createElement('span');
+    t.className = 'chain-tag ' + (i === 0 ? 'anchor-tag' : 'correct-tag');
+    t.textContent = w;
+    c.appendChild(t);
+  });
+}
+
+function confirmGroup() {
+  if (anchorGroupIdx === null) return;
+  finishGroup();
+}
+
+function skipGroup() {
+  if (anchorGroupIdx === null) return;
+  finishGroup();
+}
+
+function finishGroup() {
+  const grp = activeGroups[anchorGroupIdx];
+  const found = [...currentChain];
+  const missed = grp.filter(w => !found.includes(w));
+  grp.forEach(w => usedWords.add(w));
+  groupsDone++;
+
+  renderDoneGroup(groupsDone, found, missed);
+
+  anchorGroupIdx = null;
+  currentChain = [];
+
+  document.getElementById('chainBox').classList.remove('show');
+  document.getElementById('actionRow').classList.remove('show');
+  hideFeedback();
+
+  renderGrid();
+  updateStats();
+
+  const remaining = allWords.filter(w => !usedWords.has(w));
+  if (remaining.length === 0) {
+    endGame();
+  } else {
+    setHint('选择下一个单词，开始新的同义词组！', '');
+  }
+}
+
+function renderDoneGroup(num, found, missed) {
+  const container = document.getElementById('completedSection');
+  const d = document.createElement('div');
+  d.className = 'done-group';
+
+  const numSpan = document.createElement('span');
+  numSpan.className = 'done-group-num';
+  numSpan.textContent = `第${num}组`;
+  d.appendChild(numSpan);
+
+  found.forEach(w => {
+    const s = document.createElement('span');
+    s.className = 'done-word';
+    s.textContent = w;
+    d.appendChild(s);
+  });
+  missed.forEach(w => {
+    const s = document.createElement('span');
+    s.className = 'missed-word';
+    s.textContent = w;
+    d.appendChild(s);
+  });
+  container.appendChild(d);
+}
+
+function updateStats() {
+  document.getElementById('sDone').textContent = groupsDone + '/10';
+  document.getElementById('sRight').textContent = rightCount;
+  document.getElementById('sWrong').textContent = wrongCount;
+  const pct = Math.round(groupsDone / 10 * 100);
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+function setHint(msg) {
+  document.getElementById('statusHint').textContent = msg;
+}
+
+function showFeedback(msg, type) {
+  const box = document.getElementById('feedbackBox');
+  box.className = 'feedback-box show ' + type;
+  box.textContent = msg;
+}
+
+function hideFeedback() {
+  document.getElementById('feedbackBox').className = 'feedback-box';
+}
+
+function endGame() {
+  document.getElementById('mainArea').style.display = 'none';
+  const total = rightCount + wrongCount;
+  const acc = total > 0 ? Math.round(rightCount / total * 100) : 100;
+  document.getElementById('endRound').textContent = `第 ${round} 轮完成`;
+  document.getElementById('endScore').textContent = `准确率 ${acc}%`;
+  document.getElementById('endDetail').innerHTML =
+    `答对 <strong>${rightCount}</strong> 次 &nbsp;·&nbsp; 答错 <strong>${wrongCount}</strong> 次 &nbsp;·&nbsp; 完成 10 组`;
+  document.getElementById('endScreen').classList.add('show');
+}
+
+// 启动游戏
+startGame();
+</script>
+</body>
+</html>
