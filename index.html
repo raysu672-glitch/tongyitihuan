@@ -69,18 +69,35 @@
     top: 0;
     z-index: 100;
   }
+  .logo-section {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+  }
   .logo-badge {
-    width: 120px; height: 40px;
+    width: 140px; height: 50px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
+    background: rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 4px;
   }
   .logo-badge img {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    filter: brightness(1.2) contrast(1.1);
+  }
+  .logo-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: 0.5px;
   }
   .author-info {
     margin-left: auto;
+    margin-right: 12px;
     font-size: 13px;
     color: var(--text-dim);
     font-weight: 500;
@@ -752,7 +769,10 @@
 <canvas id="particleCanvas"></canvas>
 
 <div class="page-header">
-  <div class="logo-badge"><img src="logo.png" alt="藕叶英语"></div>
+  <div class="logo-section">
+    <div class="logo-badge"><img src="logo.png" alt="藕叶英语"></div>
+    <div class="logo-title">阅读同义替换专项练习</div>
+  </div>
   <div class="author-info">著作人：苏宁</div>
   <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</div>
 </div>
