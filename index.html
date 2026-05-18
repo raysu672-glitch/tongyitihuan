@@ -458,12 +458,167 @@
   }
   .missed-word {
     font-size: 12px;
-    color: var(--text-dimmer);
+    color: #f43f5e;
     padding: 3px 10px;
-    background: rgba(255,255,255,0.03);
+    background: rgba(244,63,94,0.15);
     border-radius: 10px;
-    border: 1px solid var(--border);
-    text-decoration: line-through;
+    border: 2px solid #f43f5e;
+    animation: missedPulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes missedPulse {
+    0%, 100% {
+      box-shadow: 0 0 5px rgba(244,63,94,0.5);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 0 15px rgba(244,63,94,0.8);
+      transform: scale(1.05);
+    }
+  }
+
+  /* ===== Reveal Card (显示正确答案) ===== */
+  .reveal-card {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: linear-gradient(135deg, #1a1f36, #141828);
+    border: 2px solid #f43f5e;
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    z-index: 3000;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 0 40px rgba(244,63,94,0.4), 0 20px 60px rgba(0,0,0,0.5);
+    min-width: 280px;
+  }
+  .reveal-card.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+    pointer-events: auto;
+  }
+  .reveal-card-title {
+    font-size: 14px;
+    color: #f43f5e;
+    margin-bottom: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .reveal-card-word {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 16px;
+    text-shadow: 0 0 20px rgba(244,63,94,0.5);
+  }
+  .reveal-card-synonyms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  .reveal-card-synonym {
+    padding: 6px 14px;
+    background: rgba(244,63,94,0.2);
+    border: 1px solid rgba(244,63,94,0.4);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #fda4af;
+    animation: synonymPop 0.4s ease forwards;
+    opacity: 0;
+  }
+  .reveal-card-synonym:nth-child(1) { animation-delay: 0.1s; }
+  .reveal-card-synonym:nth-child(2) { animation-delay: 0.2s; }
+  .reveal-card-synonym:nth-child(3) { animation-delay: 0.3s; }
+  .reveal-card-synonym:nth-child(4) { animation-delay: 0.4s; }
+  .reveal-card-synonym:nth-child(5) { animation-delay: 0.5s; }
+  .reveal-card-synonym:nth-child(n+6) { animation-delay: 0.6s; }
+  @keyframes synonymPop {
+    0% { opacity: 0; transform: scale(0.5); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  .reveal-card-btn {
+    padding: 10px 28px;
+    background: linear-gradient(135deg, #f43f5e, #dc2626);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 0 20px rgba(244,63,94,0.4);
+  }
+  .reveal-card-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 25px rgba(244,63,94,0.5);
+  }
+  .reveal-card-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 2999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .reveal-card-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ===== End screen highlight ===== */
+  .end-missed-section {
+    margin: 20px auto;
+    max-width: 600px;
+    background: rgba(244,63,94,0.08);
+    border: 2px solid rgba(244,63,94,0.3);
+    border-radius: 16px;
+    padding: 20px;
+    display: none;
+  }
+  .end-missed-section.show {
+    display: block;
+    animation: slideIn 0.5s ease;
+  }
+  .end-missed-title {
+    font-size: 14px;
+    color: #f43f5e;
+    font-weight: 600;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+  .end-missed-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .end-missed-word {
+    padding: 8px 16px;
+    background: rgba(244,63,94,0.15);
+    border: 1px solid #f43f5e;
+    border-radius: 10px;
+    font-size: 13px;
+    color: #fff;
+    animation: missedHighlight 2s ease-in-out infinite;
+  }
+  @keyframes missedHighlight {
+    0%, 100% {
+      background: rgba(244,63,94,0.15);
+      box-shadow: 0 0 5px rgba(244,63,94,0.3);
+    }
+    50% {
+      background: rgba(244,63,94,0.3);
+      box-shadow: 0 0 15px rgba(244,63,94,0.6);
+    }
   }
 
   /* ===== End screen ===== */
@@ -681,11 +836,24 @@
     <div class="end-round" id="endRound"></div>
     <div class="end-score" id="endScore"></div>
     <div class="end-detail" id="endDetail"></div>
+    <div class="end-missed-section" id="endMissedSection">
+      <div class="end-missed-title">📋 还需要巩固的词汇</div>
+      <div class="end-missed-words" id="endMissedWords"></div>
+    </div>
     <div class="end-xp" id="endXp"></div>
     <div class="end-btn-row">
       <button class="btn-primary" onclick="startGame()">🔄 换10组再战</button>
     </div>
   </div>
+</div>
+
+<!-- Reveal Card for showing missed word's correct answer -->
+<div class="reveal-card-overlay" id="revealOverlay" onclick="closeRevealCard()"></div>
+<div class="reveal-card" id="revealCard">
+  <div class="reveal-card-title">📝 正确答案</div>
+  <div class="reveal-card-word" id="revealWord"></div>
+  <div class="reveal-card-synonyms" id="revealSynonyms"></div>
+  <button class="reveal-card-btn" onclick="closeRevealCard()">我记住了 →</button>
 </div>
 
 <!-- Combo display -->
@@ -1262,6 +1430,7 @@ function formatTime(sec) {
 // ============================================================
 let round = 0;
 let rightCount = 0, wrongCount = 0, groupsDone = 0;
+let allMissedWords = []; // 全局追踪所有遗漏的词汇
 let activeGroups = [], allWords = [], wordToGroup = {};
 let anchorGroupIdx = null, currentChain = [], usedWords = new Set();
 let combo = 0;
@@ -1279,6 +1448,7 @@ function shuffle(arr) {
 function startGame() {
   round++;
   rightCount = 0; wrongCount = 0; groupsDone = 0;
+  allMissedWords = []; // 重置遗漏词汇列表
   anchorGroupIdx = null; currentChain = []; usedWords = new Set();
   combo = 0; maxCombo = 0; roundXP = 0;
 
@@ -1421,6 +1591,9 @@ function handleWordClick(word, event) {
 
       playSound('wrong');
       showFeedback(`❌ "${word}" 不属于这组，继续找！`, 'err');
+
+      // 显示正确答案卡片
+      showRevealCard(word);
     }
     updateStats();
   }
@@ -1527,6 +1700,39 @@ function hideFeedback() {
   document.getElementById('feedbackBox').className = 'feedback-box';
 }
 
+// 显示正确答案弹出卡片
+function showRevealCard(missedWord) {
+  // 获取当前组的正确同义词
+  const grp = activeGroups[anchorGroupIdx];
+  const synonyms = grp.filter(w => w !== missedWord);
+
+  // 更新卡片内容
+  document.getElementById('revealWord').textContent = missedWord;
+  const synonymsContainer = document.getElementById('revealSynonyms');
+  synonymsContainer.innerHTML = '';
+  synonyms.forEach(syn => {
+    const span = document.createElement('span');
+    span.className = 'reveal-card-synonym';
+    span.textContent = syn;
+    synonymsContainer.appendChild(span);
+  });
+
+  // 添加到全局遗漏列表
+  if (!allMissedWords.includes(missedWord)) {
+    allMissedWords.push(missedWord);
+  }
+
+  // 显示卡片
+  document.getElementById('revealOverlay').classList.add('show');
+  document.getElementById('revealCard').classList.add('show');
+}
+
+// 关闭弹出卡片
+function closeRevealCard() {
+  document.getElementById('revealOverlay').classList.remove('show');
+  document.getElementById('revealCard').classList.remove('show');
+}
+
 function endGame() {
   stopTimer();
   playSound('endgame');
@@ -1547,6 +1753,23 @@ function endGame() {
   document.getElementById('endDetail').innerHTML =
     `答对 <strong>${rightCount}</strong> 次 · 答错 <strong>${wrongCount}</strong> 次 · 最高连击 <strong>${maxCombo}</strong> · 用时 <strong>${formatTime(timerSeconds)}</strong><br>${rating}`;
   document.getElementById('endXp').textContent = `+${roundXP} XP`;
+
+  // 显示遗漏词汇高亮区域
+  const missedSection = document.getElementById('endMissedSection');
+  const missedWordsContainer = document.getElementById('endMissedWords');
+  missedWordsContainer.innerHTML = '';
+  if (allMissedWords.length > 0) {
+    allMissedWords.forEach(w => {
+      const span = document.createElement('span');
+      span.className = 'end-missed-word';
+      span.textContent = w;
+      missedWordsContainer.appendChild(span);
+    });
+    missedSection.classList.add('show');
+  } else {
+    missedSection.classList.remove('show');
+  }
+
   document.getElementById('endScreen').classList.add('show');
 
   // End game particles
