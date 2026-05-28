@@ -889,16 +889,17 @@
 //  词库
 // ============================================================
 const ALL_GROUPS = [
-  // 熟词僻义
-  ["account", "description", "describe"],
+  ["account", "description", "reports", "records"],
   ["minute", "very small", "tiny", "microscopic"],
-  ["fast", "stop eating"],
-  ["coat", "a layer of", "cover"],
+  ["fast", "stop eating", "starve", "eat no food"],
+  ["coat", "a lay of", "cover"],
   ["digit", "finger", "toe"],
-  ["produce", "agricultural products", "things connected with farming"],
-  ["fine", "punishment", "be punished", "made of very small grains"],
+  ["produce", "agricultural products", "things connected with farming", "fruit and vegetables"],
+  ["fine", "punishment", "be fined", "be punished", "penalize", "charge"],
+  ["fine", "refined", "made of small grains", "minute"],
   ["sound", "good", "healthy", "correct", "reliable", "sensible"],
-  ["ground", "small pieces of solid matter", "cut into small pieces"],
+  ["ground", "small pieces of solid matter", "crushed stuff"],
+  ["ground", "cut into small pieces", "smashed"],
   ["Act", "law", "motion", "legislation"],
   ["coin", "first used", "invent", "devise", "introduce", "forge"],
   ["lead", "a chemical element"],
@@ -910,38 +911,40 @@ const ALL_GROUPS = [
   ["film", "thin sheet", "thin layer", "covering", "coating"],
   ["novel", "new", "unusual", "unique", "fresh"],
   ["deliver", "realize", "do", "make"],
-  ["contract", "reduce", "shrink", "become smaller", "compress", "become infected", "get an illness"],
-  ["approach", "get closer to", "come near", "access", "address", "deal with", "cope with", "tackle", "attack", "grapple with"],
-  ["culture", "cultivation", "society", "civilization"],
+  ["contract", "reduce", "shrink", "become smaller or less", "compress"],
+  ["contract", "become infected with a disease", "get an illness", "become ill"],
+  ["approach", "get closer to", "come near", "access"],
+  ["approach", "address", "deal with", "cope with", "tackle", "attack", "grapple with"],
+  ["culture", "cultivation", "the growing of plants or animals"],
+  ["culture", "society", "civilization", "a set of ideas or beliefs"],
   ["vehicle", "medium", "channel"],
   ["passage", "channel", "corridor", "lane", "crossing", "passageway"],
-  // 题干用词 - 文章定位逻辑替换
   ["early", "previous", "ancient", "before", "ago"],
   ["now", "today", "nowadays", "current", "recently", "currently", "at present", "present-day"],
   ["future", "further", "will", "pave the way", "wait and see", "new", "in future decades", "prediction"],
-  ["exact", "specific", "particular", "certain"],
-  ["figures", "the amount of", "how many", "proportion", "percent"],
-  ["physical", "medical conditions", "mountains", "deserts", "physical barriers"],
+  ["具体数字", "figures", "the amount of", "how many", "proportion", "percent"],
+  ["physical", "medical", "connected with a person's body", "relating to body"],
+  ["physical", "real things", "able to be seen or touched"],
   ["climatic conditions", "floods", "droughts", "hurricanes"],
-  ["examples of", "a list of", "a number of"],
+  ["examples of", "a list of", "a number of", "2个及以上的具体例子"],
   ["items", "a list of objects", "things", "plenty of goods"],
   ["environment", "CO2 emissions", "conservation", "energy loss", "energy concerns", "ecological", "green efforts", "carbon footprint", "greenhouse gas", "green issues", "carbon emission", "climate change"],
-  // 超高频必会考点词
   ["because", "as", "since", "for", "in that", "on account of", "owing to"],
   ["so", "hence", "thus", "therefore", "as a result of", "consequently"],
   ["way", "method", "approach"],
   ["and", "as well as", "both and", "not only but also", "besides", "in addition", "can also be", "also part of", "other than", "but is accompanied by"],
-  ["cause", "lead to", "result in", "contribute to", "account for", "give rise to", "sow the seeds of", "trigger", "spark off", "precipitate", "attribute to", "motive", "reason", "explanation"],
+  ["cause", "lead to", "result in", "contribute to", "account for", "give rise to", "sow the seeds of", "trigger", "spark off", "precipitate", "attribute to"],
+  ["cause", "motive", "reason", "the reason why", "may be because", "explains", "explanation"],
   ["money", "charging", "cost", "price", "profits", "financial", "economic", "low-income", "value", "savings"],
   ["problems", "challenges", "difficult", "difficulties", "hurdles", "risks", "dilemmas", "pitfalls"],
-  ["called", "known as", "named", "referred to", "act as"],
-  ["look like", "like", "resemble", "be similar to"],
-  ["for example", "for instance", "such as", "including", "say", "namely", "e.g."],
+  ["called", "known as", "named", "referred to", "act as", "which is", "同位语，破折号，引号"],
+  ["look like", "like", "resemblance", "resemble", "be similar to"],
+  ["for example", "for instance", "such as", "like", "including", "say", "namely", "e.g."],
   ["stop", "curb", "halt", "quit", "prevent", "prohibit", "restrict", "restrain", "inhibit", "hinder", "obstruct", "thwart", "withdraw", "constrain", "curtail"],
   ["conditions", "factors", "situations", "aspects"],
-  ["decline", "turn down", "refuse", "reject", "denial"],
+  ["decline", "turn down", "refuse", "reject", "denial", "revolt"],
   ["recognize", "admit", "identify", "perceive", "acknowledge", "understand", "know", "realize"],
-  ["copy", "imitation", "mimic", "replicate", "duplicate", "follow"],
+  ["copy", "imitate", "imitation", "mimic", "replicate", "duplicate", "follow"],
   ["poor", "deprived", "socially-disadvantaged", "vulnerable"],
   ["new", "recently", "fresh", "put forward"],
   ["disease", "illness", "disorder", "ailments", "sickness", "malady", "health problem"],
@@ -954,24 +957,25 @@ const ALL_GROUPS = [
   ["weapons", "arrows and bows", "gun", "knife", "bomb"],
   ["increase", "rise", "grow", "ascend", "expand", "soar", "surge", "burst", "boost", "escalate"],
   ["show", "indicate", "demonstrate", "illustrate", "reveal", "display", "exhibit", "manifest"],
-  ["measure", "calculate", "assess", "evaluate", "estimate", "step", "methods", "degree", "amount"],
+  ["measure", "calculate", "assess", "check", "evaluate", "estimate"],
+  ["measure", "step", "methods", "degree", "amount", "way of judging", "action"],
   ["ignore", "neglect", "overlook", "pay no attention", "take no notice", "fail to take into account"],
   ["traditional", "conventional", "normal and ordinary", "well-known"],
   ["address", "cope with", "deal with", "tackle", "take care of", "handle"],
-  ["worldwide", "a number of countries", "global", "international", "different cultures", "around the world"],
+  ["worldwide", "a number of countries", "global", "international", "different cultures", "around the world", "in the world"],
   ["public", "communal", "shared"],
   ["understand", "interpret", "comprehend", "follow", "grasp"],
   ["control", "master", "harness", "manipulate", "able to exercise power", "engage sb in"],
   ["data", "information"],
   ["enemy", "foe", "opponent", "rival"],
   ["beat", "not live up to", "defeat"],
-  ["culture", "historical and religious value", "societies", "worldwide"],
+  ["culture", "historical and religious value", "western societies", "worldwide"],
   ["period", "for days", "months", "years", "last about years", "hours"],
   ["incorrect", "wrong", "misguided", "inaccurate", "mistake", "fault"],
   ["back", "support", "advocate", "sponsor", "endorse"],
-  ["vary", "differ", "change", "shift", "switch"],
+  ["vary", "differ", "change", "shift", "switch", "in different ways depending on"],
   ["main", "chief", "primary", "principal", "major"],
-  ["adapt", "use many different", "suit", "adjust", "modify", "change"],
+  ["adapt", "use many different", "suit", "adjust", "modify", "change", "in order to deal with"],
   ["climate", "in the hot sun", "weather"],
   ["unusual", "unconventional", "odd", "rare", "strange", "different from other", "obscure"],
   ["popular", "be accepted on a large scale", "prevalent", "common", "ordinary"],
@@ -995,18 +999,19 @@ const ALL_GROUPS = [
   ["given that", "considering", "concerning", "according to"],
   ["renewed interest", "focus once again on"],
   ["be more likely to", "be feel more obliged to", "be feel inclined to", "be liable to", "be prone to"],
-  // 高频核心考点词
   ["sustainable", "environment", "environmental", "ecology", "long-term", "chronic"],
-  ["complex", "complicated", "perplexing", "confusing", "sophisticated", "buildings", "constructions"],
-  ["vessels", "artifacts", "artefacts", "ornaments", "containers", "jars", "ships", "large boats"],
-  ["classify", "categorize", "be divided into", "identify", "taxonomy", "methods for assessing"],
+  ["complex", "complicated", "perplexing", "confusing", "sophisticated"],
+  ["complex", "buildings", "constructions"],
+  ["vessels", "artifacts", "artefacts", "ornaments", "containers", "jars"],
+  ["vessels", "ships", "large boats"],
+  ["classify", "categorize", "be divided into distinct types", "identify", "taxonomy", "methods for assessing"],
   ["contrast", "rather than", "instead of", "two opposing views"],
   ["predict", "prediction", "projection", "forecast"],
   ["weaknesses", "bad aspects", "disadvantages", "drawbacks", "demerits"],
   ["strengths", "good aspects", "advantages", "merits"],
   ["discard", "abandon", "being left behind", "disposed of", "cast off", "get rid of"],
   ["personality", "character", "trait", "temperament"],
-  ["warning", "cautionary", "convince against"],
+  ["warning", "cautionary", "convince show against"],
   ["consult", "ask for advice", "discuss with", "confer"],
   ["emerge", "appear", "become visible", "come into view", "come out", "show out"],
   ["criteria", "standard", "level", "norm", "benchmark"],
@@ -1033,7 +1038,7 @@ const ALL_GROUPS = [
   ["inadequate", "limited", "not enough", "too little", "few", "scarce", "insufficient", "shortage"],
   ["subsidy", "financial assistance"],
   ["precipitation", "rainfall", "snowfall", "hail"],
-  ["independent", "self-reliant", "depend on themselves"],
+  ["independent", "self-reliant", "depend on themselves", "himself or herself"],
   ["obey", "comply with", "abide by"],
   ["distrust", "suspicion and disbelief", "skeptic", "sceptic", "skeptical"],
   ["beneficial", "positive aspects", "better at", "favorable", "advantageous"],
@@ -1049,7 +1054,7 @@ const ALL_GROUPS = [
   ["urge", "desire", "impulse", "instinct", "advise", "call for", "have strong wish to do", "push", "press"],
   ["cue", "hint", "clue"],
   ["artificial", "synthetic", "man-made"],
-  ["detect", "find", "discover", "notice", "perceive", "recognize"],
+  ["detect", "find", "discover or notice", "perceive", "recognize"],
   ["surrounding", "setting", "environment"],
   ["threaten", "warn", "endanger", "jeopardise", "risk", "hazard", "intimidate"],
   ["backward", "primitive", "underdeveloped"],
@@ -1064,19 +1069,18 @@ const ALL_GROUPS = [
   ["flexibility", "versatile", "adaptable", "all-round"],
   ["exclusive", "unique", "sole", "only", "restricted"],
   ["accessible", "reachable", "attainable", "obtainable", "available"],
-  ["alternative", "unlike standard", "different from the usual", "unconventional"],
+  ["alternative", "unlike standard", "different from the usual or traditional"],
   ["lack of clarity", "have unconscious notions", "no one knows for certain"],
   ["be subjected to", "undergo", "be exposed to", "suffer from", "be afflicted with"],
   ["benefit the ecosystem", "recover the biodiversity"],
   ["less cooperative", "lack of willingness to"],
-  // 中频高分考点词
   ["alien", "not local", "not native", "outsider", "not indigenous"],
   ["contradict", "paradoxical", "refute", "dispute"],
   ["etiquette", "good manner", "polite", "politeness", "respect"],
   ["evaporate", "disappear", "fade away", "vanish", "become less"],
   ["diminish", "decrease", "reduce", "drop", "decline", "fall", "lower", "shrink", "minimize"],
   ["prestige", "symbol of status", "social position", "reputation"],
-  ["implications", "hidden effects", "implies", "suggests", "consequence"],
+  ["implications", "hidden effects", "implies or suggests", "consequence"],
   ["redress", "correct", "fix", "repair", "rectify", "amend", "make up for", "compensate", "remedy"],
   ["hygiene", "cleanliness", "keep clean"],
   ["chaos", "panic", "uncontrolled", "a state of disorder"],
@@ -1086,14 +1090,14 @@ const ALL_GROUPS = [
   ["mortality rate", "death rate"],
   ["fragile", "delicate", "vulnerable", "unstable", "weak"],
   ["succumb", "give in", "submit", "yield", "surrender", "cave in"],
-  ["folklore", "traditional customs", "widespread ideas", "local belief", "common beliefs", "wide acceptance"],
+  ["folklore", "traditional customs", "widespread ideas", "local belief", "common beliefs", "widely accepted"],
   ["dislodge", "knock down", "force out", "remove", "displace"],
   ["undisputed", "undeniable", "unquestionable", "beyond doubt"],
   ["transparent", "easy to comprehend", "open and honest"],
   ["congregate", "gather together", "assemble"],
   ["incentive", "motive", "stimulus"],
   ["mitigate", "decrease", "reduce", "ease off", "lessen", "dampen"],
-  ["innate", "built-in", "inborn", "natural"],
+  ["innate", "build-in", "inborn", "natural", "unchangeable"],
   ["confidential", "hidden", "secret", "undisclosed"],
   ["pinpoint", "identify", "find out", "discover exactly"],
   ["alleviate", "decrease", "ease", "relieve"],
@@ -1106,10 +1110,10 @@ const ALL_GROUPS = [
   ["compromise", "harm", "damage", "jeopardize", "concede", "settle", "reach a settlement", "agreement"],
   ["initiative", "scheme", "project", "program", "a new plan"],
   ["vicinity", "nearby", "neighborhood"],
-  ["imperative", "pressing", "crucial", "critical", "urgent", "vital", "obligation"],
+  ["imperative", "pressing", "crucial", "critical", "urgent", "vital", "things that are obligated"],
   ["proliferate", "multiply", "increase", "breed", "reproduce", "spread", "propagate"],
   ["chastise", "speak angrily", "reprimand", "rebuke", "berate"],
-  ["homogeneous", "similar", "uniform", "consistent", "identical"]
+  ["homogeneous", "similar", "uniform", "consistent", "identical"],
 ];
 
 // ============================================================
@@ -1197,7 +1201,6 @@ function playSound(type) {
       osc.stop(now + 0.1);
     }
     else if (type === 'correct') {
-      // Happy ascending chime
       [523.25, 659.25, 783.99].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -1235,7 +1238,6 @@ function playSound(type) {
       osc.stop(now + 0.25);
     }
     else if (type === 'complete') {
-      // Victory fanfare
       [523.25, 659.25, 783.99, 1046.5].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
@@ -1325,7 +1327,7 @@ class Particle {
   update() {
     this.x += this.vx;
     this.y += this.vy;
-    this.vy += 0.12; // gravity
+    this.vy += 0.12;
     this.vx *= 0.99;
     this.life--;
     this.rotation += this.rotSpeed;
@@ -1343,7 +1345,6 @@ class Particle {
       ctx.beginPath();
       for (let i = 0; i < 5; i++) {
         const angle = (i * 4 * Math.PI) / 5 - Math.PI / 2;
-        const r = i === 0 ? sz : sz;
         ctx.lineTo(Math.cos(angle) * sz, Math.sin(angle) * sz);
         const angle2 = angle + (2 * Math.PI) / 10;
         ctx.lineTo(Math.cos(angle2) * sz * 0.4, Math.sin(angle2) * sz * 0.4);
@@ -1452,7 +1453,7 @@ function formatTime(sec) {
 // ============================================================
 let round = 0;
 let rightCount = 0, wrongCount = 0, groupsDone = 0;
-let allMissedWords = []; // 全局追踪所有遗漏的词汇
+let allMissedWords = [];
 let activeGroups = [], allWords = [], wordToGroup = {};
 let anchorGroupIdx = null, currentChain = [], usedWords = new Set();
 let combo = 0;
@@ -1470,7 +1471,7 @@ function shuffle(arr) {
 function startGame() {
   round++;
   rightCount = 0; wrongCount = 0; groupsDone = 0;
-  allMissedWords = []; // 重置遗漏词汇列表
+  allMissedWords = [];
   anchorGroupIdx = null; currentChain = []; usedWords = new Set();
   combo = 0; maxCombo = 0; roundXP = 0;
 
@@ -1544,7 +1545,6 @@ function handleWordClick(word, event) {
     hideFeedback();
   } else {
     if (gi === anchorGroupIdx) {
-      // Correct!
       rightCount++;
       combo++;
       if (combo > maxCombo) maxCombo = combo;
@@ -1555,12 +1555,10 @@ function handleWordClick(word, event) {
       btn.disabled = true;
       renderChain();
 
-      // XP calculation with combo bonus
       const comboBonus = Math.min(combo, 5);
       const xpGain = 10 + (comboBonus - 1) * 5;
       addXP(xpGain);
 
-      // Visual effects
       const rect = btn.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
@@ -1569,7 +1567,6 @@ function handleWordClick(word, event) {
       spawnParticleBurst(cx, cy, 20, ['#22d3a7', '#34d399', '#6ee7b7', '#a7f3d0']);
       showFloatScore(cx - 20, cy - 30, `+${xpGain} XP`, 'positive');
 
-      // Combo display
       if (combo >= 2) {
         playSound('combo');
         document.getElementById('comboNum').textContent = combo;
@@ -1587,14 +1584,12 @@ function handleWordClick(word, event) {
       if (remaining.length === 0) {
         showFeedback('🎉 这组同义词已全部找到！点击"继续"', 'ok');
         playSound('complete');
-        // Big celebration
         spawnParticleBurst(window.innerWidth / 2, window.innerHeight / 2, 50, ['#fbbf24','#f59e0b','#22d3a7','#8b5cf6','#38bdf8'], ['star','diamond']);
-        addXP(15); // bonus for completing a group
+        addXP(15);
       } else {
         showFeedback(`✅ 正确！还有 ${remaining.length} 个同义词待发现`, 'ok');
       }
     } else {
-      // Wrong!
       wrongCount++;
       combo = 0;
       document.getElementById('comboDisplay').classList.remove('active');
@@ -1614,7 +1609,6 @@ function handleWordClick(word, event) {
       playSound('wrong');
       showFeedback(`❌ "${word}" 不属于这组，继续找！`, 'err');
 
-      // 显示正确答案卡片
       showRevealCard(word);
     }
     updateStats();
@@ -1722,13 +1716,10 @@ function hideFeedback() {
   document.getElementById('feedbackBox').className = 'feedback-box';
 }
 
-// 显示正确答案弹出卡片
 function showRevealCard(missedWord) {
-  // 获取当前组的正确同义词
   const grp = activeGroups[anchorGroupIdx];
   const synonyms = grp.filter(w => w !== missedWord);
 
-  // 更新卡片内容
   document.getElementById('revealWord').textContent = missedWord;
   const synonymsContainer = document.getElementById('revealSynonyms');
   synonymsContainer.innerHTML = '';
@@ -1739,17 +1730,14 @@ function showRevealCard(missedWord) {
     synonymsContainer.appendChild(span);
   });
 
-  // 添加到全局遗漏列表
   if (!allMissedWords.includes(missedWord)) {
     allMissedWords.push(missedWord);
   }
 
-  // 显示卡片
   document.getElementById('revealOverlay').classList.add('show');
   document.getElementById('revealCard').classList.add('show');
 }
 
-// 关闭弹出卡片
 function closeRevealCard() {
   document.getElementById('revealOverlay').classList.remove('show');
   document.getElementById('revealCard').classList.remove('show');
@@ -1763,7 +1751,6 @@ function endGame() {
   const total = rightCount + wrongCount;
   const acc = total > 0 ? Math.round(rightCount / total * 100) : 100;
 
-  // Rating
   let rating = '🌟';
   if (acc >= 90 && wrongCount <= 2) rating = '🏆 完美通关！';
   else if (acc >= 75) rating = '⭐ 优秀！';
@@ -1776,7 +1763,6 @@ function endGame() {
     `答对 <strong>${rightCount}</strong> 次 · 答错 <strong>${wrongCount}</strong> 次 · 最高连击 <strong>${maxCombo}</strong> · 用时 <strong>${formatTime(timerSeconds)}</strong><br>${rating}`;
   document.getElementById('endXp').textContent = `+${roundXP} XP`;
 
-  // 显示遗漏词汇高亮区域
   const missedSection = document.getElementById('endMissedSection');
   const missedWordsContainer = document.getElementById('endMissedWords');
   missedWordsContainer.innerHTML = '';
@@ -1794,13 +1780,11 @@ function endGame() {
 
   document.getElementById('endScreen').classList.add('show');
 
-  // End game particles
   setTimeout(() => {
     spawnParticleBurst(window.innerWidth / 2, window.innerHeight / 3, 60, ['#fbbf24','#8b5cf6','#22d3a7','#38bdf8','#f43f5e'], ['star','diamond']);
   }, 300);
 }
 
-// Start
 startGame();
 </script>
 </body>
