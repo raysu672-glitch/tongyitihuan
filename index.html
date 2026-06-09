@@ -1521,7 +1521,25 @@ function _sendOnClose() {
   if (_sessionClosed) return;
   _sessionClosed = true;
   if (_progressTimer) clearInterval(_progressTimer);
-  _sendSessionRecord();
+
+  // 发送剩余未记录的时间（如果有）
+  const now = Date.now();
+  const remainingDelta = Math.floor((now - _lastSendTime) / 1000);
+  if (remainingDelta >= 3) {
+    _lastSendTime = now;
+    const record = {
+      type: 'genericStudyComplete',
+      wordsTested: rightCount + wrongCount,
+      initialCorrect: rightCount,
+      initialWrong: wrongCount,
+      completedGroups: groupsDone,
+      durationSeconds: remainingDelta
+    };
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(record, '*');
+    }
+    console.log('[同义替换] 退出，发送剩余 ' + remainingDelta + '秒');
+  }
 }
 window.addEventListener('beforeunload', _sendOnClose);
 window.addEventListener('pagehide', _sendOnClose);
