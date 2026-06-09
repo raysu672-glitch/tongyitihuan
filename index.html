@@ -763,8 +763,50 @@
     .combo-num { font-size: 36px; }
   }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+
+<!-- =========== 登录覆盖层（未登录时显示） =========== -->
+<div id="loginOverlay" style="
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10, 14, 26, 0.98);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; font-family: "Segoe UI", "PingFang SC", sans-serif;
+">
+    <div style="
+        background: #141828; border: 1px solid rgba(139,92,246,0.3);
+        border-radius: 20px; padding: 40px; max-width: 420px; width: 100%;
+        box-shadow: 0 20px 60px rgba(139,92,246,0.3);
+    ">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🎓</div>
+            <h2 style="color: #e2e8f0; font-size: 1.5rem; margin-bottom: 8px;">欢迎使用</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem;">请输入学号和密码开始学习</p>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">学号</label>
+            <input type="text" id="studentIdInput" autocomplete="off"
+                style="width:100%; padding:14px 16px; background:#1a1f36;
+                       border:1px solid rgba(139,92,246,0.3); border-radius:10px;
+                       color:#e2e8f0; font-size:1rem; outline:none;">
+        </div>
+        <div style="margin-bottom: 30px;">
+            <label style="display:block; color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">密码</label>
+            <input type="password" id="studentPwdInput" autocomplete="off"
+                style="width:100%; padding:14px 16px; background:#1a1f36;
+                       border:1px solid rgba(139,92,246,0.3); border-radius:10px;
+                       color:#e2e8f0; font-size:1rem; outline:none;">
+        </div>
+        <button onclick="studentLogin()"
+            style="width:100%; padding:14px; background: linear-gradient(135deg, #8b5cf6, #22d3a7);
+                   border:none; border-radius:10px; color:white; font-size:1rem;
+                   font-weight: bold; cursor: pointer;">登 录</button>
+        <div id="loginError" style="color:#f43f5e; text-align:center; margin-top:15px; font-size:0.9rem;"></div>
+        <div id="loginHint" style="color:#64748b; text-align:center; margin-top:10px; font-size:0.8rem;"></div>
+    </div>
+</div>
+
 
 <canvas id="particleCanvas"></canvas>
 
@@ -1546,6 +1588,7 @@ function handleWordClick(word, event) {
   } else {
     if (gi === anchorGroupIdx) {
       rightCount++;
+            recordAnswer(true, { word: word });
       combo++;
       if (combo > maxCombo) maxCombo = combo;
       currentChain.push(word);
@@ -1591,6 +1634,7 @@ function handleWordClick(word, event) {
       }
     } else {
       wrongCount++;
+            recordAnswer(false, { word: word });
       combo = 0;
       document.getElementById('comboDisplay').classList.remove('active');
 
@@ -1786,6 +1830,128 @@ function endGame() {
 }
 
 startGame();
+
+
+/* ============================================================
+   【模块追踪系统】学习时长 + 答题正确率 → 写入 Supabase
+   ============================================================ */
+const TRACK_SUPABASE_URL = 'https://xoyctsbcrfwhhrxkerwr.supabase.co';
+const TRACK_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhveWN0c2JjcmZ3aGhyeGtlcndyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNTQ1NzIsImV4cCI6MjA5NDkzMDU3Mn0.EZKqTt-w2N4y5BqZNa-QYA9F1mi51yjl8tF6gQ2aYKQ';
+const TRACK_MODULE_TYPE = 'synonym';
+const TRACK_MODULE_NAME = '同义替换';
+
+let _track_supabase = null;
+let _track_currentStudent = null;
+let _track_sessionStart = null;
+let _track_rightCount = 0;
+let _track_wrongCount = 0;
+let _track_saveInterval = null;
+
+// 初始化 Supabase 客户端
+try {
+    _track_supabase = window.supabase.createClient(TRACK_SUPABASE_URL, TRACK_SUPABASE_KEY);
+} catch (e) {
+    console.warn('[Track] Supabase 初始化失败:', e);
+}
+
+/* ----- 登录函数 ----- */
+async function studentLogin() {
+    const sid = document.getElementById('studentIdInput').value.trim();
+    const pwd = document.getElementById('studentPwdInput').value;
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+    if (!sid || !pwd) {
+        errEl.textContent = '请输入学号和密码';
+        return;
+    }
+    try {
+        const { data, error } = await _track_supabase
+            .from('students')
+            .select('student_id, name, password')
+            .eq('student_id', sid)
+            .limit(1);
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            errEl.textContent = '学号或密码错误';
+            return;
+        }
+        if (data[0].password !== pwd) {
+            errEl.textContent = '学号或密码错误';
+            return;
+        }
+        _track_currentStudent = data[0];
+        localStorage.setItem('studentSession', JSON.stringify({
+            student: _track_currentStudent,
+            expiresAt: Date.now() + 24 * 60 * 60 * 1000
+        }));
+        document.getElementById('loginOverlay').style.display = 'none';
+        _track_sessionStart = Date.now();
+        _track_rightCount = 0;
+        _track_wrongCount = 0;
+        // 每 5 分钟自动保存一次
+        if (_track_saveInterval) clearInterval(_track_saveInterval);
+        _track_saveInterval = setInterval(_track_saveSession, 5 * 60 * 1000);
+    } catch (e) {
+        errEl.textContent = '登录失败，请稍后再试';
+    }
+}
+
+/* ----- 页面加载时检查缓存登录状态 ----- */
+(function _track_checkLogin() {
+    try {
+        const saved = localStorage.getItem('studentSession');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.expiresAt > Date.now()) {
+                _track_currentStudent = data.student;
+                document.getElementById('loginOverlay').style.display = 'none';
+                _track_sessionStart = Date.now();
+                if (_track_saveInterval) clearInterval(_track_saveInterval);
+                _track_saveInterval = setInterval(_track_saveSession, 5 * 60 * 1000);
+                return;
+            }
+        }
+    } catch (e) {}
+    // 显示登录页
+    setTimeout(() => {
+        const input = document.getElementById('studentIdInput');
+        if (input) input.focus();
+    }, 100);
+})();
+
+/* ----- 记录一道题的对错（被原有答题逻辑调用） ----- */
+function recordAnswer(isCorrect, questionInfo) {
+    if (isCorrect) _track_rightCount++;
+    else _track_wrongCount++;
+}
+
+/* ----- 保存学习会话到数据库 ----- */
+async function _track_saveSession() {
+    if (!_track_currentStudent || !_track_sessionStart) return;
+    const duration = Math.round((Date.now() - _track_sessionStart) / 1000);
+    const total = _track_rightCount + _track_wrongCount;
+    // 不足 5 秒且没有答题就不记录，避免噪音数据
+    if (duration < 5 && total === 0) return;
+    const score = total > 0 ? Math.round((_track_rightCount / total) * 100 * 100) / 100 : null;
+    try {
+        await _track_supabase.from('learning_sessions').insert({
+            student_id: _track_currentStudent.student_id,
+            module_type: TRACK_MODULE_TYPE,
+            module_name: TRACK_MODULE_NAME,
+            duration_seconds: duration,
+            correct_count: _track_rightCount,
+            total_count: total,
+            score: score
+        });
+    } catch (e) {
+        console.warn('[Track] 保存学习数据失败:', e.message || e);
+    }
+}
+
+/* ----- 页面关闭/切换时保存 ----- */
+window.addEventListener('beforeunload', _track_saveSession);
+window.addEventListener('pagehide', _track_saveSession);
+
 </script>
 </body>
 </html>
