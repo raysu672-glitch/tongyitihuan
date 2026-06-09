@@ -1471,6 +1471,54 @@ function shuffle(arr) {
   return a;
 }
 
+// ===== 与主系统通信（学习进度记录）=====
+let _sessionStartTime = Date.now();
+let _wordsTested = 0;
+let _wordsCorrect = 0;
+let _wordsWrong = 0;
+
+function sendStudyProgress() {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'genericModuleProgress',
+        wordsTested: _wordsTested,
+        initialCorrect: _wordsCorrect,
+        initialWrong: _wordsWrong,
+        completedGroups: groupsDone
+      }, '*');
+    }
+  } catch(e) {}
+}
+
+function sendStudyComplete() {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'genericStudyComplete',
+        wordsTested: _wordsTested,
+        initialCorrect: _wordsCorrect,
+        initialWrong: _wordsWrong,
+        completedGroups: groupsDone
+      }, '*');
+    }
+  } catch(e) {}
+}
+
+// 页面关闭/刷新时发送学习完成消息
+window.addEventListener('beforeunload', function() {
+  sendStudyComplete();
+});
+window.addEventListener('pagehide', function() {
+  sendStudyComplete();
+});
+// 监听主系统的保存请求
+window.addEventListener('message', function(event) {
+  if (event.data && event.data.type === 'requestSave') {
+    sendStudyComplete();
+  }
+});
+
 function startGame() {
   round++;
   rightCount = 0; wrongCount = 0; groupsDone = 0;
@@ -1662,6 +1710,7 @@ function finishGroup() {
 
   renderGrid();
   updateStats();
+  sendStudyProgress();
 
   const remaining = allWords.filter(w => !usedWords.has(w));
   if (remaining.length === 0) {
@@ -1697,6 +1746,9 @@ function renderDoneGroup(num, found, missed) {
 }
 
 function updateStats() {
+  _wordsTested = rightCount + wrongCount;
+  _wordsCorrect = rightCount;
+  _wordsWrong = wrongCount;
   document.getElementById('sDone').textContent = groupsDone + '/10';
   document.getElementById('sRight').textContent = rightCount;
   document.getElementById('sWrong').textContent = wrongCount;
@@ -1781,6 +1833,7 @@ function endGame() {
     missedSection.classList.remove('show');
   }
 
+  sendStudyComplete();
   document.getElementById('endScreen').classList.add('show');
 
   setTimeout(() => {
