@@ -1471,74 +1471,113 @@ function shuffle(arr) {
   return a;
 }
 
-// ===== 与主系统通信（学习进度记录）=====
-let _sessionStartTime = Date.now();
-let _wordsTested = 0;
-let _wordsCorrect = 0;
-let _wordsWrong = 0;
+// ===== 与主系统通信（参考 listening.html 模式）=====
+let _sessionStartTime = Date.now();  // 当前学习会话开始时间戳
+let _totalSeconds = 0;               // 累计学习时长（通过 localStorage 持久化）
 
-function sendStudyProgress() {
+// 从 localStorage 读取累计时长
+try {
+  const saved = localStorage.getItem('tongyitihuan_progress');
+  if (saved) {
+    const data = JSON.parse(saved);
+    if (data.totalSecondsLearned) _totalSeconds = data.totalSecondsLearned;
+  }
+} catch(e) {}
+
+function _saveProgress() {
   try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: 'genericModuleProgress',
-        wordsTested: _wordsTested,
-        initialCorrect: _wordsCorrect,
-        initialWrong: _wordsWrong,
-        completedGroups: groupsDone
-      }, '*');
-    }
+    localStorage.setItem('tongyitihuan_progress', JSON.stringify({
+      totalSecondsLearned: _totalSeconds,
+      timestamp: Date.now()
+    }));
   } catch(e) {}
 }
 
-function sendStudyComplete() {
-  try {
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({
-        type: 'genericStudyComplete',
-        wordsTested: _wordsTested,
-        initialCorrect: _wordsCorrect,
-        initialWrong: _wordsWrong,
-        completedGroups: groupsDone
-      }, '*');
-    }
-  } catch(e) {}
+// 发送学习记录给主系统（类似 listening.html 的 sendStudyRecord）
+function _sendStudyRecord(forceSave) {
+  // 计算当前总时长 = 累计时长 + 当前会话时长
+  let currentTotalSeconds = _totalSeconds;
+  if (_sessionStartTime > 0) {
+    currentTotalSeconds += Math.floor((Date.now() - _sessionStartTime) / 1000);
+  }
+  if (currentTotalSeconds < 1) currentTotalSeconds = 1;
+
+  const record = {
+    type: 'genericStudyComplete',
+    wordsTested: rightCount + wrongCount,
+    initialCorrect: rightCount,
+    initialWrong: wrongCount,
+    completedGroups: groupsDone,
+    durationSeconds: currentTotalSeconds
+  };
+
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage(record, '*');
+    console.log('[同义替换] 发送学习记录: ' + currentTotalSeconds + '秒, 完成' + groupsDone + '组');
+  } else {
+    console.log('[同义替换] 学习记录（不在iframe中）:', record);
+  }
 }
 
-// 定时发送学习进度（每 20 秒）
+// 每组完成后发送一次学习记录（类似 listening.html 的 showComplete）
+function _finishGroupSend() {
+  if (_sessionStartTime > 0) {
+    const sessionElapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+    _totalSeconds += sessionElapsed;
+    _sessionStartTime = Date.now();  // 重置会话开始时间（下一组重新计时）
+    _saveProgress();
+  }
+  _sendStudyRecord();
+}
+
+// 结束全部学习时发送完整记录
+function _endAllSend() {
+  if (_sessionStartTime > 0) {
+    const sessionElapsed = Math.floor((Date.now() - _sessionStartTime) / 1000);
+    _totalSeconds += sessionElapsed;
+    _sessionStartTime = 0;
+    _saveProgress();
+  }
+  _sendStudyRecord();
+}
+
+// 定时发送学习进度（每 20 秒，防止意外关闭丢失时长）
 let _progressTimer = setInterval(function() {
-  if (_wordsTested > 0 || rightCount > 0 || wrongCount > 0) {
-    sendStudyProgress();
+  if (groupsDone > 0 || rightCount > 0 || wrongCount > 0) {
+    _sendStudyRecord();
   }
 }, 20000);
 
 // 页面关闭/刷新时发送学习完成消息
 window.addEventListener('beforeunload', function() {
   if (_progressTimer) clearInterval(_progressTimer);
-  sendStudyComplete();
+  _endAllSend();
 });
 window.addEventListener('pagehide', function() {
   if (_progressTimer) clearInterval(_progressTimer);
-  sendStudyComplete();
+  _endAllSend();
 });
+
 // 监听主系统的保存请求
 window.addEventListener('message', function(event) {
   if (event.data && event.data.type === 'requestSave') {
-    sendStudyComplete();
+    _endAllSend();
   }
 });
 
-// 打开后立即发送一次初始记录（确保有记录）
+// 打开后 1 秒发送一次初始记录（确保只要打开就有记录）
 setTimeout(function() {
   try {
     if (window.parent && window.parent !== window) {
       window.parent.postMessage({
-        type: 'genericModuleProgress',
+        type: 'genericStudyComplete',
         wordsTested: 0,
         initialCorrect: 0,
         initialWrong: 0,
-        completedGroups: 0
+        completedGroups: 0,
+        durationSeconds: 1
       }, '*');
+      console.log('[同义替换] 发送初始记录');
     }
   } catch(e) {}
 }, 1000);
@@ -1734,7 +1773,7 @@ function finishGroup() {
 
   renderGrid();
   updateStats();
-  sendStudyProgress();
+  _finishGroupSend();  // 每组完成后立即发送学习记录
 
   const remaining = allWords.filter(w => !usedWords.has(w));
   if (remaining.length === 0) {
@@ -1770,9 +1809,6 @@ function renderDoneGroup(num, found, missed) {
 }
 
 function updateStats() {
-  _wordsTested = rightCount + wrongCount;
-  _wordsCorrect = rightCount;
-  _wordsWrong = wrongCount;
   document.getElementById('sDone').textContent = groupsDone + '/10';
   document.getElementById('sRight').textContent = rightCount;
   document.getElementById('sWrong').textContent = wrongCount;
@@ -1857,7 +1893,7 @@ function endGame() {
     missedSection.classList.remove('show');
   }
 
-  sendStudyComplete();
+  _endAllSend();
   document.getElementById('endScreen').classList.add('show');
 
   setTimeout(() => {
