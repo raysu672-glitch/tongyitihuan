@@ -1471,13 +1471,20 @@ function shuffle(arr) {
   return a;
 }
 
-// ===== 与主系统通信（只记录本次会话时长）=====
-let _sessionStartTime = Date.now();  // 当前会话开始时间戳
+// ===== 与主系统通信（发送增量时长，避免重复累加）=====
+let _sessionStartTime = Date.now();   // 当前会话开始时间戳
+let _lastSendTime = _sessionStartTime; // 上次发送记录的时间戳
+let _sessionClosed = false;            // 是否已发送关闭记录（防止 beforeunload+pagehide 重复）
 
-// 发送学习记录给主系统（只计算本次会话时长，不累加历史）
+// 发送学习记录给主系统（只发送"距上次发送的增量时长"）
 function _sendSessionRecord() {
-  let sessionSeconds = Math.floor((Date.now() - _sessionStartTime) / 1000);
-  if (sessionSeconds < 1) sessionSeconds = 1;  // 至少记 1 秒
+  if (_sessionClosed) return;  // 已关闭则不再发送
+
+  const now = Date.now();
+  let deltaSeconds = Math.floor((now - _lastSendTime) / 1000);
+  if (deltaSeconds < 1) return;  // 距离上次发送不足 1 秒则不发
+
+  _lastSendTime = now;  // 更新"上次发送时间"为当前时刻
 
   const record = {
     type: 'genericStudyComplete',
@@ -1485,39 +1492,39 @@ function _sendSessionRecord() {
     initialCorrect: rightCount,
     initialWrong: wrongCount,
     completedGroups: groupsDone,
-    durationSeconds: sessionSeconds
+    durationSeconds: deltaSeconds
   };
 
   if (window.parent && window.parent !== window) {
     window.parent.postMessage(record, '*');
-    console.log('[同义替换] 发送: ' + sessionSeconds + '秒, 完成' + groupsDone + '组, 单词' + (rightCount+wrongCount) + '个');
+    console.log('[同义替换] +' + deltaSeconds + '秒, 完成' + groupsDone + '组, 单词' + (rightCount+wrongCount) + '个');
   } else {
     console.log('[同义替换] 学习记录（不在iframe中）:', record);
   }
 }
 
-// 每组完成后发送一次
+// 每组完成后发送一次增量
 function _finishGroupSend() {
   _sendSessionRecord();
 }
 
-// 定时发送（每 30 秒发送一次，防止意外关闭丢失）
+// 定时发送（每 30 秒发送一次增量，防止意外关闭丢失）
 let _progressTimer = setInterval(function() {
-  const secs = Math.floor((Date.now() - _sessionStartTime) / 1000);
-  if (secs >= 10) {  // 至少学习 10 秒才定时发
+  const totalSecs = Math.floor((Date.now() - _sessionStartTime) / 1000);
+  if (totalSecs >= 10) {  // 至少学习 10 秒才开始定时发
     _sendSessionRecord();
   }
 }, 30000);
 
-// 页面关闭/刷新时发送
-window.addEventListener('beforeunload', function() {
+// 页面关闭/刷新时发送（加标记确保只触发一次）
+function _sendOnClose() {
+  if (_sessionClosed) return;
+  _sessionClosed = true;
   if (_progressTimer) clearInterval(_progressTimer);
   _sendSessionRecord();
-});
-window.addEventListener('pagehide', function() {
-  if (_progressTimer) clearInterval(_progressTimer);
-  _sendSessionRecord();
-});
+}
+window.addEventListener('beforeunload', _sendOnClose);
+window.addEventListener('pagehide', _sendOnClose);
 
 // 监听主系统的保存请求
 window.addEventListener('message', function(event) {
@@ -1530,15 +1537,18 @@ window.addEventListener('message', function(event) {
 setTimeout(function() {
   try {
     if (window.parent && window.parent !== window) {
+      const delta = Math.floor((Date.now() - _lastSendTime) / 1000);
+      const sendSecs = delta >= 1 ? delta : 2;
+      _lastSendTime = Date.now();
       window.parent.postMessage({
         type: 'genericStudyComplete',
         wordsTested: 0,
         initialCorrect: 0,
         initialWrong: 0,
         completedGroups: 0,
-        durationSeconds: 2
+        durationSeconds: sendSecs
       }, '*');
-      console.log('[同义替换] 打开，发送初始记录');
+      console.log('[同义替换] 打开，发送初始记录 +' + sendSecs + '秒');
     }
   } catch(e) {}
 }, 2000);
