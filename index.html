@@ -1790,31 +1790,6 @@ function endGame() {
 
 startGame();
 
-
-    if (isCorrect) _track_rightCount++;
-    else _track_wrongCount++;
-}
-
-/* ----- 保存学习会话到数据库 ----- */
-    const total = _track_rightCount + _track_wrongCount;
-    // 不足 5 秒且没有答题就不记录，避免噪音数据
-    if (duration < 5 && total === 0) return;
-    const score = total > 0 ? Math.round((_track_rightCount / total) * 100 * 100) / 100 : null;
-    try {
-            module_type: TRACK_MODULE_TYPE,
-            module_name: TRACK_MODULE_NAME,
-            duration_seconds: duration,
-            correct_count: _track_rightCount,
-            total_count: total,
-            score: score
-        });
-    } catch (e) {
-        console.warn('[Track] 保存学习数据失败:', e.message || e);
-    }
-}
-
-/* ----- 页面关闭/切换时保存 ----- */
-
 </script>
 </body>
 </html>
