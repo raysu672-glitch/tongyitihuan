@@ -1505,11 +1505,20 @@ function sendStudyComplete() {
   } catch(e) {}
 }
 
+// 定时发送学习进度（每 20 秒）
+let _progressTimer = setInterval(function() {
+  if (_wordsTested > 0 || rightCount > 0 || wrongCount > 0) {
+    sendStudyProgress();
+  }
+}, 20000);
+
 // 页面关闭/刷新时发送学习完成消息
 window.addEventListener('beforeunload', function() {
+  if (_progressTimer) clearInterval(_progressTimer);
   sendStudyComplete();
 });
 window.addEventListener('pagehide', function() {
+  if (_progressTimer) clearInterval(_progressTimer);
   sendStudyComplete();
 });
 // 监听主系统的保存请求
@@ -1518,6 +1527,21 @@ window.addEventListener('message', function(event) {
     sendStudyComplete();
   }
 });
+
+// 打开后立即发送一次初始记录（确保有记录）
+setTimeout(function() {
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({
+        type: 'genericModuleProgress',
+        wordsTested: 0,
+        initialCorrect: 0,
+        initialWrong: 0,
+        completedGroups: 0
+      }, '*');
+    }
+  } catch(e) {}
+}, 1000);
 
 function startGame() {
   round++;
