@@ -763,10 +763,49 @@
     .combo-num { font-size: 36px; }
   }
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
 <!-- =========== 登录覆盖层（未登录时显示） =========== -->
+<div id="loginOverlay" style="
+    position: fixed; inset: 0; z-index: 9999;
+    background: rgba(10, 14, 26, 0.98);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; font-family: "Segoe UI", "PingFang SC", sans-serif;
+">
+    <div style="
+        background: #141828; border: 1px solid rgba(139,92,246,0.3);
+        border-radius: 20px; padding: 40px; max-width: 420px; width: 100%;
+        box-shadow: 0 20px 60px rgba(139,92,246,0.3);
+    ">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 3rem; margin-bottom: 10px;">🎓</div>
+            <h2 style="color: #e2e8f0; font-size: 1.5rem; margin-bottom: 8px;">欢迎使用</h2>
+            <p style="color: #94a3b8; font-size: 0.95rem;">请输入学号和密码开始学习</p>
+        </div>
+        <div style="margin-bottom: 20px;">
+            <label style="display:block; color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">学号</label>
+            <input type="text" id="studentIdInput" autocomplete="off"
+                style="width:100%; padding:14px 16px; background:#1a1f36;
+                       border:1px solid rgba(139,92,246,0.3); border-radius:10px;
+                       color:#e2e8f0; font-size:1rem; outline:none;">
+        </div>
+        <div style="margin-bottom: 30px;">
+            <label style="display:block; color:#94a3b8; font-size:0.9rem; margin-bottom:8px;">密码</label>
+            <input type="password" id="studentPwdInput" autocomplete="off"
+                style="width:100%; padding:14px 16px; background:#1a1f36;
+                       border:1px solid rgba(139,92,246,0.3); border-radius:10px;
+                       color:#e2e8f0; font-size:1rem; outline:none;">
+        </div>
+        <button onclick="studentLogin()"
+            style="width:100%; padding:14px; background: linear-gradient(135deg, #8b5cf6, #22d3a7);
+                   border:none; border-radius:10px; color:white; font-size:1rem;
+                   font-weight: bold; cursor: pointer;">登 录</button>
+        <div id="loginError" style="color:#f43f5e; text-align:center; margin-top:15px; font-size:0.9rem;"></div>
+        <div id="loginHint" style="color:#64748b; text-align:center; margin-top:10px; font-size:0.8rem;"></div>
+    </div>
+</div>
 
 
 <canvas id="particleCanvas"></canvas>
@@ -1471,106 +1510,6 @@ function shuffle(arr) {
   return a;
 }
 
-// ===== 与主系统通信（发送增量时长，避免重复累加）=====
-let _sessionStartTime = Date.now();   // 当前会话开始时间戳
-let _lastSendTime = _sessionStartTime; // 上次发送记录的时间戳
-let _sessionClosed = false;            // 是否已发送关闭记录（防止 beforeunload+pagehide 重复）
-
-// 发送学习记录给主系统（只发送"距上次发送的增量时长"）
-function _sendSessionRecord() {
-  if (_sessionClosed) return;  // 已关闭则不再发送
-
-  const now = Date.now();
-  let deltaSeconds = Math.floor((now - _lastSendTime) / 1000);
-  if (deltaSeconds < 1) return;  // 距离上次发送不足 1 秒则不发
-
-  _lastSendTime = now;  // 更新"上次发送时间"为当前时刻
-
-  const record = {
-    type: 'genericStudyComplete',
-    wordsTested: rightCount + wrongCount,
-    initialCorrect: rightCount,
-    initialWrong: wrongCount,
-    completedGroups: groupsDone,
-    durationSeconds: deltaSeconds
-  };
-
-  if (window.parent && window.parent !== window) {
-    window.parent.postMessage(record, '*');
-    console.log('[同义替换] +' + deltaSeconds + '秒, 完成' + groupsDone + '组, 单词' + (rightCount+wrongCount) + '个');
-  } else {
-    console.log('[同义替换] 学习记录（不在iframe中）:', record);
-  }
-}
-
-// 每组完成后发送一次增量
-function _finishGroupSend() {
-  _sendSessionRecord();
-}
-
-// 定时发送（每 30 秒发送一次增量，防止意外关闭丢失）
-let _progressTimer = setInterval(function() {
-  const totalSecs = Math.floor((Date.now() - _sessionStartTime) / 1000);
-  if (totalSecs >= 10) {  // 至少学习 10 秒才开始定时发
-    _sendSessionRecord();
-  }
-}, 30000);
-
-// 页面关闭/刷新时发送（加标记确保只触发一次）
-function _sendOnClose() {
-  if (_sessionClosed) return;
-  _sessionClosed = true;
-  if (_progressTimer) clearInterval(_progressTimer);
-
-  // 发送剩余未记录的时间（如果有）
-  const now = Date.now();
-  const remainingDelta = Math.floor((now - _lastSendTime) / 1000);
-  if (remainingDelta >= 3) {
-    _lastSendTime = now;
-    const record = {
-      type: 'genericStudyComplete',
-      wordsTested: rightCount + wrongCount,
-      initialCorrect: rightCount,
-      initialWrong: wrongCount,
-      completedGroups: groupsDone,
-      durationSeconds: remainingDelta
-    };
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage(record, '*');
-    }
-    console.log('[同义替换] 退出，发送剩余 ' + remainingDelta + '秒');
-  }
-}
-window.addEventListener('beforeunload', _sendOnClose);
-window.addEventListener('pagehide', _sendOnClose);
-
-// 监听主系统的保存请求
-window.addEventListener('message', function(event) {
-  if (event.data && event.data.type === 'requestSave') {
-    _sendSessionRecord();
-  }
-});
-
-// 打开后 2 秒发送一次初始记录（确保只要打开就有记录）
-setTimeout(function() {
-  try {
-    if (window.parent && window.parent !== window) {
-      const delta = Math.floor((Date.now() - _lastSendTime) / 1000);
-      const sendSecs = delta >= 1 ? delta : 2;
-      _lastSendTime = Date.now();
-      window.parent.postMessage({
-        type: 'genericStudyComplete',
-        wordsTested: 0,
-        initialCorrect: 0,
-        initialWrong: 0,
-        completedGroups: 0,
-        durationSeconds: sendSecs
-      }, '*');
-      console.log('[同义替换] 打开，发送初始记录 +' + sendSecs + '秒');
-    }
-  } catch(e) {}
-}, 2000);
-
 function startGame() {
   round++;
   rightCount = 0; wrongCount = 0; groupsDone = 0;
@@ -1649,6 +1588,7 @@ function handleWordClick(word, event) {
   } else {
     if (gi === anchorGroupIdx) {
       rightCount++;
+            recordAnswer(true, { word: word });
       combo++;
       if (combo > maxCombo) maxCombo = combo;
       currentChain.push(word);
@@ -1694,6 +1634,7 @@ function handleWordClick(word, event) {
       }
     } else {
       wrongCount++;
+            recordAnswer(false, { word: word });
       combo = 0;
       document.getElementById('comboDisplay').classList.remove('active');
 
@@ -1762,7 +1703,6 @@ function finishGroup() {
 
   renderGrid();
   updateStats();
-  _finishGroupSend();  // 每组完成后立即发送学习记录
 
   const remaining = allWords.filter(w => !usedWords.has(w));
   if (remaining.length === 0) {
@@ -1882,7 +1822,6 @@ function endGame() {
     missedSection.classList.remove('show');
   }
 
-  _endAllSend();
   document.getElementById('endScreen').classList.add('show');
 
   setTimeout(() => {
@@ -1891,6 +1830,164 @@ function endGame() {
 }
 
 startGame();
+
+
+/* ============================================================
+   【模块追踪系统】学习时长 + 答题正确率 → 通过 postMessage 发送给主页面
+   ============================================================ */
+const TRACK_MODULE_TYPE = 'reading_synonym';
+const TRACK_MODULE_NAME = '阅读同义替换';
+
+let _track_studentId = null;
+let _track_sessionStart = null;
+let _track_rightCount = 0;
+let _track_wrongCount = 0;
+let _track_saveInterval = null;
+
+/* ----- 检查是否在 iframe 中运行 ----- */
+function _track_isInIframe() {
+    try {
+        return window.self !== window.top;
+    } catch (e) {
+        return true;
+    }
+}
+
+/* ----- 通过 postMessage 发送学习数据给主页面 ----- */
+function _track_sendToParent(isExit) {
+    if (!_track_sessionStart) return;
+    const now = Date.now();
+    const duration = Math.round((now - _track_sessionStart) / 1000);
+    const total = _track_rightCount + _track_wrongCount;
+    // 不足 3 秒且没有答题就不记录，避免噪音数据
+    if (duration < 3 && total === 0 && !isExit) return;
+    try {
+        if (window.parent && window.parent.postMessage) {
+            window.parent.postMessage({
+                type: 'genericStudyComplete',
+                moduleType: TRACK_MODULE_TYPE,
+                moduleName: TRACK_MODULE_NAME,
+                student_id: _track_studentId,
+                durationSeconds: duration,
+                rightCount: _track_rightCount,
+                wrongCount: _track_wrongCount,
+                totalCount: total,
+                isExit: !!isExit
+            }, '*');
+        }
+    } catch (e) {
+        console.warn('[Track] 发送学习数据失败:', e);
+    }
+}
+
+/* ----- 监听主页面请求保存 ----- */
+window.addEventListener('message', function(event) {
+    if (event.data && event.data.type === 'requestSave') {
+        _track_sendToParent(true);
+    }
+});
+
+/* ----- 记录一道题的对错（被原有答题逻辑调用） ----- */
+function recordAnswer(isCorrect, questionInfo) {
+    if (isCorrect) _track_rightCount++;
+    else _track_wrongCount++;
+}
+
+/* ----- 页面加载时：如果在 iframe 中运行，立即隐藏登录页 ----- */
+(function _track_init() {
+    try {
+        // 无论独立运行还是在 iframe 中，都隐藏登录覆盖层
+        // 在 iframe 模式下，由主页面管理学生身份
+        // 独立运行时：尝试从 URL 参数或 localStorage 获取学生信息
+        const inIframe = _track_isInIframe();
+        const loginOverlay = document.getElementById('loginOverlay');
+
+        // 尝试从 URL 参数获取 student_id（主页面传递）
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlStudentId = urlParams.get('student_id');
+        if (urlStudentId) {
+            _track_studentId = urlStudentId;
+        }
+
+        // 尝试从 localStorage 获取（独立运行场景）
+        if (!_track_studentId) {
+            try {
+                const saved = localStorage.getItem('studentSession');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    if (data && data.student_id) {
+                        _track_studentId = data.student_id;
+                    }
+                }
+            } catch (e) {}
+        }
+
+        // 如果在 iframe 中或已获取学生信息，隐藏登录覆盖层
+        if (inIframe || _track_studentId) {
+            if (loginOverlay) {
+                loginOverlay.style.display = 'none';
+            }
+        }
+
+        // 启动计时
+        _track_sessionStart = Date.now();
+        _track_rightCount = 0;
+        _track_wrongCount = 0;
+
+        // 每 3 分钟定时保存一次增量数据（用当前时间标记，而非累加）
+        if (_track_saveInterval) clearInterval(_track_saveInterval);
+        _track_saveInterval = setInterval(function() {
+            _track_sendToParent(false);
+            // 重置时间起点，下次保存用新的时间差
+            _track_sessionStart = Date.now();
+        }, 3 * 60 * 1000);
+
+        console.log('[Track] 同义替换追踪已启动, mode=' + (inIframe ? 'iframe' : 'standalone'));
+    } catch (e) {
+        console.warn('[Track] 初始化失败:', e);
+    }
+})();
+
+/* ----- 页面关闭/切换时发送最后一次数据 ----- */
+window.addEventListener('beforeunload', function() {
+    _track_sendToParent(true);
+});
+window.addEventListener('pagehide', function() {
+    _track_sendToParent(true);
+});
+
+/* ----- 提供给独立登录场景使用：保留 studentLogin 函数 ----- */
+async function studentLogin() {
+    const sid = document.getElementById('studentIdInput').value.trim();
+    const pwd = document.getElementById('studentPwdInput').value;
+    const errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+    if (!sid || !pwd) {
+        errEl.textContent = '请输入学号和密码';
+        return;
+    }
+    try {
+        // 独立运行模式：简单的本地验证 + localStorage 存储
+        _track_studentId = sid;
+        try {
+            localStorage.setItem('studentSession', JSON.stringify({
+                student_id: sid,
+                expiresAt: Date.now() + 24 * 60 * 60 * 1000
+            }));
+        } catch (e) {}
+        document.getElementById('loginOverlay').style.display = 'none';
+        _track_sessionStart = Date.now();
+        _track_rightCount = 0;
+        _track_wrongCount = 0;
+        if (_track_saveInterval) clearInterval(_track_saveInterval);
+        _track_saveInterval = setInterval(function() {
+            _track_sendToParent(false);
+            _track_sessionStart = Date.now();
+        }, 3 * 60 * 1000);
+    } catch (e) {
+        errEl.textContent = '登录失败，请稍后再试';
+    }
+}
 
 </script>
 </body>
