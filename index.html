@@ -1842,7 +1842,6 @@ let _track_studentId = null;
 let _track_sessionStart = null;
 let _track_rightCount = 0;
 let _track_wrongCount = 0;
-let _track_saveInterval = null;
 
 /* ----- 检查是否在 iframe 中运行 ----- */
 function _track_isInIframe() {
@@ -1937,14 +1936,6 @@ function recordAnswer(isCorrect, questionInfo) {
         _track_sessionStart = Date.now();
         _track_rightCount = 0;
         _track_wrongCount = 0;
-
-        // 每5秒自动保存一次学习时长
-        if (_track_saveInterval) clearInterval(_track_saveInterval);
-        _track_saveInterval = setInterval(function() {
-            if (_track_sessionStart) {
-                _track_sendToParent(false);
-            }
-        }, 5000);
 
         console.log('[Track] 同义替换追踪已启动, mode=' + (inIframe ? 'iframe' : 'standalone'));
     } catch (e) {
