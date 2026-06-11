@@ -1859,10 +1859,9 @@ function _track_sendToParent(isExit) {
     const now = Date.now();
     const duration = Math.round((now - _track_sessionStart) / 1000);
     const total = _track_rightCount + _track_wrongCount;
-    // 非退出时：不足 3 秒且没有答题就不记录，避免噪音数据
+    // 非退出时：不足 1 秒且没有答题就不记录，避免噪音数据
     // 退出时：不管时长多少都记录，避免遗漏
-    if (!isExit && duration < 3 && total === 0) return;
-    // 退出时：如果时长 < 3 秒且完全没有答题，也记录（允许静音小数据）
+    if (!isExit && duration < 1 && total === 0) return;
     if (isExit && duration < 1 && total === 0) return;
     try {
         if (window.parent && window.parent.postMessage) {
@@ -1881,6 +1880,8 @@ function _track_sendToParent(isExit) {
     } catch (e) {
         console.warn('[Track] 发送学习数据失败:', e);
     }
+    // 非退出时重置计时起点（每次发送增量）
+    if (!isExit) _track_sessionStart = Date.now();
 }
 
 /* ----- 监听主页面请求保存 ----- */
@@ -1937,13 +1938,13 @@ function recordAnswer(isCorrect, questionInfo) {
         _track_rightCount = 0;
         _track_wrongCount = 0;
 
-        // 每 60 秒定时保存一次增量数据（用当前时间标记，而非累加）
+        // 每5秒自动保存一次学习时长
         if (_track_saveInterval) clearInterval(_track_saveInterval);
         _track_saveInterval = setInterval(function() {
-            _track_sendToParent(false);
-            // 重置时间起点，下次保存用新的时间差
-            _track_sessionStart = Date.now();
-        }, 60 * 1000);
+            if (_track_sessionStart) {
+                _track_sendToParent(false);
+            }
+        }, 5000);
 
         console.log('[Track] 同义替换追踪已启动, mode=' + (inIframe ? 'iframe' : 'standalone'));
     } catch (e) {
