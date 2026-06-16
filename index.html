@@ -1896,14 +1896,14 @@ function recordAnswer(isCorrect, questionInfo) {
     else _track_wrongCount++;
 }
 
-/* ----- 页面加载时：如果在 iframe 中运行，立即隐藏登录页 ----- */
+/* ----- 页面加载时：直接隐藏登录页，无需登录 ----- */
 (function _track_init() {
     try {
-        // 无论独立运行还是在 iframe 中，都隐藏登录覆盖层
-        // 在 iframe 模式下，由主页面管理学生身份
-        // 独立运行时：尝试从 URL 参数或 localStorage 获取学生信息
-        const inIframe = _track_isInIframe();
+        // tongyitihuan 项目无需登录，直接隐藏登录覆盖层
         const loginOverlay = document.getElementById('loginOverlay');
+        if (loginOverlay) {
+            loginOverlay.style.display = 'none';
+        }
 
         // 尝试从 URL 参数获取 student_id（主页面传递）
         const urlParams = new URLSearchParams(window.location.search);
@@ -1912,32 +1912,12 @@ function recordAnswer(isCorrect, questionInfo) {
             _track_studentId = urlStudentId;
         }
 
-        // 尝试从 localStorage 获取（独立运行场景）
-        if (!_track_studentId) {
-            try {
-                const saved = localStorage.getItem('studentSession');
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    if (data && data.student_id) {
-                        _track_studentId = data.student_id;
-                    }
-                }
-            } catch (e) {}
-        }
-
-        // 如果在 iframe 中或已获取学生信息，隐藏登录覆盖层
-        if (inIframe || _track_studentId) {
-            if (loginOverlay) {
-                loginOverlay.style.display = 'none';
-            }
-        }
-
         // 启动计时
         _track_sessionStart = Date.now();
         _track_rightCount = 0;
         _track_wrongCount = 0;
 
-        console.log('[Track] 同义替换追踪已启动, mode=' + (inIframe ? 'iframe' : 'standalone'));
+        console.log('[Track] 同义替换追踪已启动（无需登录模式）');
     } catch (e) {
         console.warn('[Track] 初始化失败:', e);
     }
