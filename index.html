@@ -1227,7 +1227,7 @@
 <!-- Reveal Card for showing missed word's correct answer -->
 <div class="reveal-card-overlay" id="revealOverlay" onclick="closeRevealCard()"></div>
 <div class="reveal-card" id="revealCard">
-  <div class="reveal-card-title">📝 正确答案</div>
+  <div class="reveal-card-title">📝 本组参照词</div>
   <div class="reveal-card-word" id="revealWord"></div>
   <div class="reveal-card-synonyms" id="revealSynonyms"></div>
   <button class="reveal-card-btn" onclick="closeRevealCard()">我记住了 →</button>
@@ -3672,12 +3672,12 @@ function hideFeedback() {
 
 function showRevealCard(missedWord) {
   const grp = activeGroups[anchorGroupIdx];
-  const synonyms = grp.filter(w => w !== missedWord);
+  const anchorWord = currentChain[0]; // 参照词是正确答案
 
-  document.getElementById('revealWord').textContent = missedWord;
+  document.getElementById('revealWord').textContent = anchorWord;
   const synonymsContainer = document.getElementById('revealSynonyms');
   synonymsContainer.innerHTML = '';
-  synonyms.forEach(syn => {
+  grp.forEach(syn => {
     const span = document.createElement('span');
     span.className = 'reveal-card-synonym';
     span.textContent = syn;
