@@ -536,6 +536,37 @@
     color: #fff;
     margin-bottom: 16px;
     text-shadow: 0 0 20px rgba(244,63,94,0.5);
+    position: relative;
+  }
+  .reveal-card-word .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a1f36, #141828);
+    border: 1px solid rgba(139,92,246,0.5);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 140px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.2);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .reveal-card-word .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(139,92,246,0.5);
+  }
+  .reveal-card-word:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
   }
   .reveal-card-synonyms {
     display: flex;
@@ -553,6 +584,37 @@
     color: #fda4af;
     animation: synonymPop 0.4s ease forwards;
     opacity: 0;
+    position: relative;
+  }
+  .reveal-card-synonym .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a1f36, #141828);
+    border: 1px solid rgba(139,92,246,0.5);
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 120px;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.2);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .reveal-card-synonym .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(139,92,246,0.5);
+  }
+  .reveal-card-synonym:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
   }
   .reveal-card-synonym:nth-child(1) { animation-delay: 0.1s; }
   .reveal-card-synonym:nth-child(2) { animation-delay: 0.2s; }
@@ -3673,14 +3735,24 @@ function hideFeedback() {
 function showRevealCard(missedWord) {
   const grp = activeGroups[anchorGroupIdx];
   const anchorWord = currentChain[0]; // 参照词是正确答案
+  const anchorCn = getChineseMeaning(anchorWord);
 
-  document.getElementById('revealWord').textContent = anchorWord;
+  const revealWord = document.getElementById('revealWord');
+  const anchorTooltip = anchorCn
+    ? `<div class="tooltip"><div class="tooltip-cn">${anchorCn}</div></div>`
+    : `<div class="tooltip"><div class="tooltip-cn">暂无翻译</div></div>`;
+  revealWord.innerHTML = anchorWord + anchorTooltip;
+
   const synonymsContainer = document.getElementById('revealSynonyms');
   synonymsContainer.innerHTML = '';
   grp.forEach(syn => {
     const span = document.createElement('span');
     span.className = 'reveal-card-synonym';
-    span.textContent = syn;
+    const cn = getChineseMeaning(syn);
+    const tooltip = cn
+      ? `<div class="tooltip"><div class="tooltip-cn">${cn}</div></div>`
+      : `<div class="tooltip"><div class="tooltip-cn">暂无翻译</div></div>`;
+    span.innerHTML = syn + tooltip;
     synonymsContainer.appendChild(span);
   });
 
