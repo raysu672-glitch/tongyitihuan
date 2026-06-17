@@ -755,12 +755,200 @@
     100% { transform: scale(1); opacity: 1; }
   }
 
+  /* ===== Home screen styles ===== */
+  .home-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .home-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--purple), var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .home-subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+  }
+  .sets-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+  .set-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .set-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--purple), var(--blue));
+    transform: scaleX(0);
+    transition: transform 0.3s;
+  }
+  .set-card:hover {
+    border-color: var(--purple);
+    box-shadow: 0 0 25px rgba(139,92,246,0.2);
+    transform: translateY(-3px);
+  }
+  .set-card:hover::before {
+    transform: scaleX(1);
+  }
+  .set-card:hover .set-arrow {
+    transform: translateX(5px);
+  }
+  .set-num {
+    font-size: 12px;
+    color: var(--text-dimmer);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+  .set-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .set-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    line-height: 1.4;
+  }
+  .set-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-dimmer);
+  }
+  .set-arrow {
+    color: var(--purple);
+    transition: transform 0.2s;
+  }
+
+  /* ===== Study screen styles ===== */
+  .study-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .btn-back {
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .btn-back:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text);
+  }
+  .study-title-wrap {
+    flex: 1;
+    min-width: 200px;
+  }
+  .study-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+  .study-subtitle {
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .study-progress {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+  .study-progress #totalGroups {
+    color: var(--purple);
+    font-weight: 700;
+  }
+  .groups-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .group-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    transition: all 0.2s;
+  }
+  .group-card:hover {
+    border-color: rgba(139,92,246,0.3);
+    background: rgba(139,92,246,0.03);
+  }
+  .group-label {
+    font-size: 11px;
+    color: var(--text-dimmer);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .group-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .group-word {
+    padding: 6px 12px;
+    background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(34,211,167,0.1));
+    border: 1px solid rgba(139,92,246,0.2);
+    border-radius: 20px;
+    font-size: 13px;
+    color: #c4b5fd;
+    transition: all 0.2s;
+  }
+  .group-word:hover {
+    background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(34,211,167,0.15));
+    transform: translateY(-2px);
+  }
+  .game-header {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
   /* ===== Responsive ===== */
   @media (max-width: 480px) {
     .stats-row { grid-template-columns: repeat(2, 1fr); }
     .word-btn { font-size: 12px; padding: 6px 12px; }
     .combo-display { top: 70px; right: 10px; }
     .combo-num { font-size: 36px; }
+    .sets-grid { grid-template-columns: 1fr; }
+    .study-header { flex-direction: column; text-align: center; }
+    .study-title-wrap { order: -1; }
   }
 </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -820,7 +1008,37 @@
 </div>
 
 <div class="container">
+  <!-- ===== 首页 - 大组列表 ===== -->
+  <div id="homeScreen" style="display:none;">
+    <div class="home-header">
+      <h2 class="home-title">📚 同义替换学习</h2>
+      <p class="home-subtitle">选择一个单元开始学习</p>
+    </div>
+    <div class="sets-grid" id="setsGrid"></div>
+  </div>
+
+  <!-- ===== 学习页面 ===== -->
+  <div id="studyScreen" style="display:none;">
+    <div class="study-header">
+      <button class="btn-back" onclick="goHome()">← 返回</button>
+      <div class="study-title-wrap">
+        <h2 class="study-title" id="studyTitle"></h2>
+        <p class="study-subtitle" id="studySubtitle"></p>
+      </div>
+      <button class="btn-primary" id="startPracticeBtn" onclick="startPractice()">开始练习 →</button>
+    </div>
+    <div class="study-progress">
+      <span id="studyProgressText">共 <span id="totalGroups">0</span> 组</span>
+    </div>
+    <div class="groups-list" id="groupsList"></div>
+  </div>
+
+  <!-- ===== 游戏页面 ===== -->
   <div id="mainArea">
+    <div class="game-header">
+      <button class="btn-back" onclick="goToStudy()">← 返回学习</button>
+      <button class="btn-back" onclick="goHome()">🏠 首页</button>
+    </div>
     <!-- Level & XP -->
     <div class="level-row">
       <div class="level-badge" id="levelBadge">Lv.1</div>
@@ -928,7 +1146,7 @@
 
 <script>
 // ============================================================
-//  词库
+//  词库 - 大组结构
 // ============================================================
 const ALL_GROUPS = [
   ["account", "description", "reports", "records"],
@@ -1157,6 +1375,124 @@ const ALL_GROUPS = [
   ["chastise", "speak angrily", "reprimand", "rebuke", "berate"],
   ["homogeneous", "similar", "uniform", "consistent", "identical"],
 ];
+
+// ============================================================
+//  大组结构 - 将225组分成23个大组（每组10组，最后一组5组）
+// ============================================================
+const GROUP_SETS = [
+  { id: 1, name: '入门基础篇', description: '常见基础同义词' },
+  { id: 2, name: '学术核心篇', description: '学术写作必备词汇' },
+  { id: 3, name: '阅读高频篇', description: '阅读考试高频替换' },
+  { id: 4, name: '动词进阶篇', description: '动词同义替换' },
+  { id: 5, name: '形容词扩展篇', description: '形容词丰富表达' },
+  { id: 6, name: '名词辨析篇', description: '易混淆名词区分' },
+  { id: 7, name: '副词强化篇', description: '副词精准运用' },
+  { id: 8, name: '因果逻辑篇', description: '因果关系表达' },
+  { id: 9, name: '对比转折篇', description: '对比转折词汇' },
+  { id: 10, name: '程度修饰篇', description: '程度副词与修饰' },
+  { id: 11, name: '时间序列篇', description: '时间表达与顺序' },
+  { id: 12, name: '数量比例篇', description: '数量与比例表达' },
+  { id: 13, name: '情感态度篇', description: '态度与情感词汇' },
+  { id: 14, name: '科技学术篇', description: '科技类文章词汇' },
+  { id: 15, name: '环境生态篇', description: '环境相关词汇' },
+  { id: 16, name: '社会文化篇', description: '社会文化词汇' },
+  { id: 17, name: '经济商业篇', description: '经济与商业词汇' },
+  { id: 18, name: '教育学习篇', description: '教育相关词汇' },
+  { id: 19, name: '健康医疗篇', description: '健康与医疗词汇' },
+  { id: 20, name: '法律政治篇', description: '法律与政治词汇' },
+  { id: 21, name: '艺术媒体篇', description: '艺术与媒体词汇' },
+  { id: 22, name: '自然科学篇', description: '自然科学词汇' },
+  { id: 23, name: '综合提升篇', description: '综合难度词汇' },
+];
+
+function getGroupSet(setId) {
+  const setSize = 10;
+  const startIdx = (setId - 1) * setSize;
+  const endIdx = Math.min(startIdx + setSize, ALL_GROUPS.length);
+  return ALL_GROUPS.slice(startIdx, endIdx);
+}
+
+// ============================================================
+//  页面导航系统
+// ============================================================
+let currentSetId = null;
+let currentSetGroups = [];
+
+function showScreen(screenId) {
+  document.getElementById('homeScreen').style.display = 'none';
+  document.getElementById('studyScreen').style.display = 'none';
+  document.getElementById('mainArea').style.display = 'none';
+  document.getElementById('endScreen').classList.remove('show');
+  document.getElementById(screenId).style.display = '';
+}
+
+function goHome() {
+  showScreen('homeScreen');
+  renderHome();
+}
+
+function goToStudy() {
+  showScreen('studyScreen');
+  renderStudy();
+}
+
+function selectSet(setId) {
+  currentSetId = setId;
+  currentSetGroups = getGroupSet(setId);
+  showScreen('studyScreen');
+  renderStudy();
+}
+
+function startPractice() {
+  if (!currentSetId || currentSetGroups.length === 0) {
+    alert('请先选择一个学习单元');
+    return;
+  }
+  showScreen('mainArea');
+  startGameWithSet(currentSetGroups);
+}
+
+function renderHome() {
+  const grid = document.getElementById('setsGrid');
+  grid.innerHTML = '';
+  GROUP_SETS.forEach(set => {
+    const card = document.createElement('div');
+    card.className = 'set-card';
+    card.onclick = () => selectSet(set.id);
+    card.innerHTML = `
+      <div class="set-num">单元 ${set.id}</div>
+      <div class="set-name">${set.name}</div>
+      <div class="set-desc">${set.description}</div>
+      <div class="set-info">
+        <span>${getGroupSet(set.id).length} 组词汇</span>
+        <span class="set-arrow">→</span>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function renderStudy() {
+  if (!currentSetId) return;
+  const setInfo = GROUP_SETS.find(s => s.id === currentSetId);
+  document.getElementById('studyTitle').textContent = setInfo?.name || '';
+  document.getElementById('studySubtitle').textContent = setInfo?.description || '';
+  document.getElementById('totalGroups').textContent = currentSetGroups.length;
+  
+  const list = document.getElementById('groupsList');
+  list.innerHTML = '';
+  currentSetGroups.forEach((group, idx) => {
+    const card = document.createElement('div');
+    card.className = 'group-card';
+    card.innerHTML = `
+      <div class="group-label">第 ${idx + 1} 组</div>
+      <div class="group-words">
+        ${group.map(w => `<span class="group-word">${w}</span>`).join('')}
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
 
 // ============================================================
 //  Level system
@@ -1511,14 +1847,17 @@ function shuffle(arr) {
 }
 
 function startGame() {
+  goHome();
+}
+
+function startGameWithSet(groups) {
   round++;
   rightCount = 0; wrongCount = 0; groupsDone = 0;
   allMissedWords = [];
   anchorGroupIdx = null; currentChain = []; usedWords = new Set();
   combo = 0; maxCombo = 0; roundXP = 0;
 
-  const indices = shuffle([...Array(ALL_GROUPS.length).keys()]).slice(0, 10);
-  activeGroups = indices.map(i => ALL_GROUPS[i]);
+  activeGroups = [...groups];
 
   allWords = [];
   wordToGroup = {};
@@ -1538,7 +1877,8 @@ function startGame() {
   document.getElementById('comboDisplay').classList.remove('active');
   hideFeedback();
 
-  document.getElementById('progressText').textContent = `第 ${round} 轮 · 随机抽取 10 组`;
+  const setInfo = GROUP_SETS.find(s => s.id === currentSetId);
+  document.getElementById('progressText').textContent = `${setInfo?.name || '练习'} · 共 ${activeGroups.length} 组`;
   document.getElementById('sTotal').textContent = allWords.length;
 
   renderGrid();
@@ -1738,10 +2078,11 @@ function renderDoneGroup(num, found, missed) {
 }
 
 function updateStats() {
-  document.getElementById('sDone').textContent = groupsDone + '/10';
+  const totalGroups = activeGroups.length || 10;
+  document.getElementById('sDone').textContent = groupsDone + '/' + totalGroups;
   document.getElementById('sRight').textContent = rightCount;
   document.getElementById('sWrong').textContent = wrongCount;
-  const pct = Math.round(groupsDone / 10 * 100);
+  const pct = Math.round(groupsDone / totalGroups * 100);
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
 }
@@ -1896,7 +2237,7 @@ function recordAnswer(isCorrect, questionInfo) {
     else _track_wrongCount++;
 }
 
-/* ----- 页面加载时：直接隐藏登录页，无需登录 ----- */
+/* ----- 页面加载时：直接隐藏登录页，显示首页 ----- */
 (function _track_init() {
     try {
         // tongyitihuan 项目无需登录，直接隐藏登录覆盖层
@@ -1917,7 +2258,10 @@ function recordAnswer(isCorrect, questionInfo) {
         _track_rightCount = 0;
         _track_wrongCount = 0;
 
-        console.log('[Track] 同义替换追踪已启动（无需登录模式）');
+        // 显示首页
+        goHome();
+
+        console.log('[Track] 同义替换追踪已启动（学习模式）');
     } catch (e) {
         console.warn('[Track] 初始化失败:', e);
     }
