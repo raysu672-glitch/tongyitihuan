@@ -928,9 +928,104 @@
     color: #c4b5fd;
     transition: all 0.2s;
   }
+  .group-word {
+    position: relative;
+    cursor: help;
+  }
   .group-word:hover {
     background: linear-gradient(135deg, rgba(139,92,246,0.25), rgba(34,211,167,0.15));
     transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(139,92,246,0.3);
+  }
+  .group-word .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a1f36, #141828);
+    border: 1px solid rgba(139,92,246,0.5);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 180px;
+    max-width: 280px;
+    color: #e2e8f0;
+    font-size: 13px;
+    line-height: 1.6;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.2);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .group-word .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(139,92,246,0.5);
+  }
+  .group-word:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+  }
+
+  .word-btn .tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #1a1f36, #141828);
+    border: 1px solid rgba(139,92,246,0.5);
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 140px;
+    color: #fbbf24;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1000;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 20px rgba(139,92,246,0.2);
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .word-btn .tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: rgba(139,92,246,0.5);
+  }
+  .word-btn:hover:not(:disabled) .tooltip {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(-2px);
+  }
+  .word-btn {
+    position: relative;
+  }
+
+  .tooltip-cn {
+    color: #fbbf24;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+  .tooltip-syn {
+    color: #94a3b8;
+    font-size: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 6px;
+    margin-top: 6px;
+  }
+  .tooltip-syn-label {
+    color: #22d3a7;
+    font-weight: 600;
   }
   .game-header {
     display: flex;
@@ -1413,9 +1508,1466 @@ function getGroupSet(setId) {
 }
 
 // ============================================================
-//  页面导航系统
+//  中文翻译词典 - 按同义替换逻辑提供中文释义
 // ============================================================
-let currentSetId = null;
+const CHINESE_DICT = {
+  // === 基础词汇 ===
+  "account": "n. 账目；描述；报道",
+  "description": "n. 描述；说明；形容",
+  "reports": "n. 报告；报道；v. 汇报",
+  "records": "n. 记录；档案；v. 记录",
+
+  "minute": "adj. 微小的；n. 分钟",
+  "very small": "非常小的；极微小的",
+  "tiny": "adj. 极小的；微小的",
+  "microscopic": "adj. 微观的；极小的",
+
+  "fast": "v. 禁食；斋戒；adj. 快速的",
+  "stop eating": "停止进食；不吃东西",
+  "starve": "v. 挨饿；使饿死",
+  "eat no food": "不吃任何食物；禁食",
+
+  "coat": "n. 涂层；外衣；v. 覆盖",
+  "a lay of": "一层（层状物）",
+  "cover": "v. 覆盖；涵盖；n. 封面",
+
+  "digit": "n. 数字；手指；脚趾",
+  "finger": "n. 手指",
+  "toe": "n. 脚趾",
+
+  "produce": "n. 农产品；v. 生产",
+  "agricultural products": "农产品；农业产品",
+  "things connected with farming": "与农业相关的事物",
+  "fruit and vegetables": "水果和蔬菜",
+
+  "fine": "n. 罚款；v. 罚款；adj. 优良的；精细的",
+  "punishment": "n. 惩罚；处罚",
+  "be fined": "被罚款；处以罚金",
+  "be punished": "被处罚；受惩罚",
+  "penalize": "v. 处罚；惩罚",
+  "charge": "v. 指控；收费；n. 费用",
+
+  "refined": "adj. 精炼的；精细的；文雅的",
+  "made of small grains": "由细颗粒构成的",
+
+  "sound": "adj. 健康的；合理的；n. 声音",
+  "good": "adj. 好的；优良的",
+  "healthy": "adj. 健康的；有益健康的",
+  "correct": "adj. 正确的；准确的",
+  "reliable": "adj. 可靠的；可信赖的",
+  "sensible": "adj. 明智的；合理的",
+
+  "ground": "n. 地面；碎末；v. 研磨",
+  "small pieces of solid matter": "小块固体物质；碎末",
+  "crushed stuff": "压碎的东西；碾碎物",
+
+  "cut into small pieces": "切成小块；切碎",
+  "smashed": "adj. 被打碎的；被压扁的",
+
+  // === 学术词汇 ===
+  "Act": "n. 法案；行为；v. 行动",
+  "law": "n. 法律；法则；规律",
+  "motion": "n. 运动；动议；v. 示意",
+  "legislation": "n. 立法；法律；法规",
+
+  "coin": "v. 创造；杜撰；n. 硬币",
+  "first used": "首次使用；最早使用",
+  "invent": "v. 发明；创造；编造",
+  "devise": "v. 设计；发明；想出",
+  "introduce": "v. 引进；采用；介绍",
+  "forge": "v. 伪造；铸造；打造",
+
+  "lead": "n. 铅；v. 引导；领导",
+  "a chemical element": "一种化学元素",
+
+  "successive": "adj. 连续的；接连的",
+  "consecutive": "adj. 连续的；连贯的",
+  "sequent": "adj. 连续的；相继的",
+  "serial": "adj. 连续的；系列的",
+
+  "belief": "n. 相信；信念；信仰",
+  "opinion": "n. 意见；看法；观点",
+  "view": "n. 观点；看法；视野",
+
+  "manage": "v. 设法做到；管理；经营",
+  "succeed in doing": "成功做成（某事）",
+
+  "undesirable": "adj. 不受欢迎的；不良的",
+  "harmful": "adj. 有害的；伤害的",
+  "unwanted": "adj. 不需要的；多余的",
+  "detrimental": "adj. 有害的；不利的",
+  "potential danger": "潜在危险；可能的危害",
+
+  "likelihood": "n. 可能性；可能",
+  "probability": "n. 概率；可能性",
+  "possibility": "n. 可能性；可能发生的事",
+
+  "film": "n. 薄膜；电影；v. 拍摄",
+  "thin sheet": "薄片；薄金属片",
+  "thin layer": "薄层；薄涂层",
+  "covering": "n. 覆盖物；覆盖层",
+  "coating": "n. 涂层；涂料",
+
+  "novel": "adj. 新颖的；新奇的；n. 小说",
+  "new": "adj. 新的；新鲜的",
+  "unusual": "adj. 不寻常的；罕见的",
+  "unique": "adj. 独特的；独一无二的",
+  "fresh": "adj. 新鲜的；清新的",
+
+  "deliver": "v. 实现；履行；交付",
+  "realize": "v. 实现；认识到；了解",
+  "do": "v. 做；干；进行",
+  "make": "v. 制造；使得；做",
+
+  "contract": "v. 收缩；订合同；n. 合同",
+  "reduce": "v. 减少；降低；缩小",
+  "shrink": "v. 收缩；缩小；退缩",
+  "become smaller or less": "变得更小或更少",
+  "compress": "v. 压缩；压紧；精简",
+
+  "become infected with a disease": "感染上疾病；染病",
+  "get an illness": "生病；得病",
+  "become ill": "生病；患病",
+
+  // === 方法与途径 ===
+  "approach": "n./v. 方法；途径；接近",
+  "get closer to": "更接近；靠近",
+  "come near": "靠近；接近",
+  "access": "n./v. 访问；接入；使用",
+
+  "address": "v. 处理；解决；n. 地址",
+  "deal with": "处理；对付；应付",
+  "cope with": "应付；处理；应对",
+  "tackle": "v. 处理；解决；应付",
+  "attack": "v. 攻击；着手处理",
+  "grapple with": "努力解决；设法应付",
+
+  // === 文化与社会 ===
+  "culture": "n. 文化；文明；养殖",
+  "cultivation": "n. 培养；养殖；耕种",
+  "the growing of plants or animals": "动植物的养殖/种植",
+
+  "society": "n. 社会；社团",
+  "civilization": "n. 文明；文化",
+  "a set of ideas or beliefs": "一套思想或信念",
+
+  "vehicle": "n. 车辆；媒介；载体",
+  "medium": "n. 媒介；手段；中间物",
+  "channel": "n. 渠道；途径；频道",
+
+  "passage": "n. 通道；段落；通过",
+  "corridor": "n. 走廊；通道",
+  "lane": "n. 小巷；车道；航道",
+  "crossing": "n. 交叉点；十字路口",
+  "passageway": "n. 通道；走廊",
+
+  // === 时间与现在 ===
+  "early": "adj. 早期的；提早的",
+  "previous": "adj. 以前的；先前的",
+  "ancient": "adj. 古代的；古老的",
+  "before": "prep./adv. 在...之前",
+  "ago": "adv. 以前；过去",
+
+  "now": "adv. 现在；此刻",
+  "today": "adv./n. 今天；如今",
+  "nowadays": "adv. 现在；当今",
+  "current": "adj. 当前的；现行的",
+  "recently": "adv. 最近；近来",
+  "at present": "目前；现在",
+  "present-day": "adj. 当代的；现今的",
+
+  "future": "n./adj. 未来；将来的",
+  "further": "adv./adj. 进一步；更远的",
+  "will": "aux. 将；会；愿意",
+  "pave the way": "铺路；为...做准备",
+  "wait and see": "拭目以待；观望",
+  "in future decades": "在未来几十年里",
+  "prediction": "n. 预测；预言",
+
+  // === 数量与数据 ===
+  "具体数字": "具体数字；具体数据",
+  "figures": "n. 数字；图表；人物",
+  "the amount of": "...的数量",
+  "how many": "多少；几个",
+  "proportion": "n. 比例；均衡",
+  "percent": "n./adv. 百分比；百分之...",
+
+  // === 身体与物理 ===
+  "physical": "adj. 身体的；物理的；物质的",
+  "medical": "adj. 医学的；医疗的",
+  "connected with a person's body": "与人体相关的",
+  "relating to body": "关于身体的",
+
+  "real things": "真实的事物；实体物",
+  "able to be seen or touched": "能被看见或触摸到的",
+
+  // === 环境与气候 ===
+  "climatic conditions": "气候条件",
+  "floods": "n. 洪水；水灾",
+  "droughts": "n. 干旱；旱灾",
+  "hurricanes": "n. 飓风；狂风",
+
+  "environment": "n. 环境；生态环境",
+  "CO2 emissions": "二氧化碳排放",
+  "conservation": "n. 保护；节约；保存",
+  "energy loss": "能量损失；能源损耗",
+  "energy concerns": "能源问题；能源关切",
+  "ecological": "adj. 生态的；生态学的",
+  "green efforts": "环保努力；绿色行动",
+  "carbon footprint": "碳足迹",
+  "greenhouse gas": "温室气体",
+  "green issues": "环保问题；绿色议题",
+  "carbon emission": "碳排放",
+  "climate change": "气候变化",
+
+  // === 举例说明 ===
+  "examples of": "...的例子",
+  "a list of": "...的列表",
+  "a number of": "许多；若干",
+  "2个及以上的具体例子": "两个及以上的具体例子",
+
+  "items": "n. 物品；项目；条目",
+  "a list of objects": "物品清单",
+  "things": "n. 事物；东西",
+  "plenty of goods": "大量商品",
+
+  // === 因果关系 ===
+  "because": "conj. 因为",
+  "as": "conj./prep. 因为；作为；当",
+  "since": "conj./prep. 因为；自从",
+  "for": "conj./prep. 因为；为了",
+  "in that": "因为；在于",
+  "on account of": "由于；因为",
+  "owing to": "由于；因为",
+
+  "so": "conj./adv. 所以；因此",
+  "hence": "adv. 因此；所以",
+  "thus": "adv. 因此；于是；这样",
+  "therefore": "adv. 因此；所以",
+  "as a result of": "作为...的结果；由于",
+  "consequently": "adv. 因此；结果",
+
+  // === 方式方法 ===
+  "way": "n. 方式；方法；道路",
+  "method": "n. 方法；方式；条理",
+
+  "and": "conj. 和；与；而且",
+  "as well as": "以及；和...一样",
+  "both and": "两者都；既...又",
+  "not only but also": "不仅...而且",
+  "besides": "prep./adv. 除...之外；此外",
+  "in addition": "此外；另外",
+  "can also be": "也可以是",
+  "also part of": "也是...的一部分",
+  "other than": "除了；不同于",
+  "but is accompanied by": "但伴随有",
+
+  // === 导致与引起 ===
+  "cause": "v. 导致；引起；n. 原因",
+  "lead to": "导致；通向",
+  "result in": "导致；结果是",
+  "contribute to": "促成；有助于",
+  "account for": "说明；解释；占...比例",
+  "give rise to": "引起；导致",
+  "sow the seeds of": "播下...的种子；埋下祸根",
+  "trigger": "v. 触发；引发",
+  "spark off": "触发；引起",
+  "precipitate": "v. 促成；使突然发生",
+  "attribute to": "归因于；归咎于",
+
+  "motive": "n. 动机；目的",
+  "reason": "n. 原因；理由；v. 推理",
+  "the reason why": "...的原因",
+  "may be because": "可能是因为",
+  "explains": "v. 解释；说明",
+  "explanation": "n. 解释；说明",
+
+  // === 金钱与经济 ===
+  "money": "n. 钱；金钱；货币",
+  "charging": "n. 收费；充电；v. 收费",
+  "cost": "n./v. 成本；花费",
+  "price": "n. 价格；代价",
+  "profits": "n. 利润；收益",
+  "financial": "adj. 金融的；财务的",
+  "economic": "adj. 经济的；经济学的",
+  "low-income": "adj. 低收入的",
+  "value": "n. 价值；数值",
+  "savings": "n. 储蓄；存款",
+
+  // === 问题与挑战 ===
+  "problems": "n. 问题；难题",
+  "challenges": "n. 挑战；v. 挑战",
+  "difficult": "adj. 困难的；艰难的",
+  "difficulties": "n. 困难；困境",
+  "hurdles": "n. 障碍；困难",
+  "risks": "n. 风险；危险",
+  "dilemmas": "n. 困境；两难处境",
+  "pitfalls": "n. 陷阱；隐患",
+
+  // === 称作与命名 ===
+  "called": "adj./v. 被称为；名叫",
+  "known as": "被称为；以...著称",
+  "named": "adj./v. 命名为；名叫",
+  "referred to": "被称为；被提及",
+  "act as": "充当；担任；起...作用",
+  "which is": "那就是；即",
+  "同位语，破折号，引号": "同位语结构；破折号说明；引号引用",
+
+  // === 外观与相似 ===
+  "look like": "看起来像；看似",
+  "like": "prep./v. 像；喜欢",
+  "resemblance": "n. 相似；相像",
+  "resemble": "v. 类似；像",
+  "be similar to": "与...相似",
+
+  // === 举例 ===
+  "for example": "例如；比如",
+  "for instance": "例如；比如",
+  "such as": "诸如；例如",
+  "including": "prep. 包括；包含",
+  "say": "v. 说；比如；假设",
+  "namely": "adv. 即；也就是",
+  "e.g.": "abbr. 例如（exempli gratia）",
+
+  // === 阻止与限制 ===
+  "stop": "v./n. 停止；阻止",
+  "curb": "v./n. 控制；抑制；限制",
+  "halt": "v./n. 停止；暂停",
+  "quit": "v. 停止；放弃；辞职",
+  "prevent": "v. 阻止；预防",
+  "prohibit": "v. 禁止；阻止",
+  "restrict": "v. 限制；约束",
+  "restrain": "v. 抑制；约束",
+  "inhibit": "v. 抑制；阻止",
+  "hinder": "v. 阻碍；妨碍",
+  "obstruct": "v. 阻塞；妨碍",
+  "thwart": "v. 挫败；阻止",
+  "withdraw": "v. 撤回；退出",
+  "constrain": "v. 强迫；限制",
+  "curtail": "v. 缩减；缩短",
+
+  // === 条件与因素 ===
+  "conditions": "n. 条件；情况；状态",
+  "factors": "n. 因素；因子",
+  "situations": "n. 情况；形势；处境",
+  "aspects": "n. 方面；外观",
+
+  // === 拒绝与下降 ===
+  "decline": "v./n. 下降；拒绝；衰退",
+  "turn down": "拒绝；调低",
+  "refuse": "v. 拒绝；谢绝",
+  "reject": "v. 拒绝；驳回；排斥",
+  "denial": "n. 否认；拒绝",
+  "revolt": "v./n. 反抗；叛乱",
+
+  // === 认知与承认 ===
+  "recognize": "v. 认出；承认；认可",
+  "admit": "v. 承认；准许进入",
+  "identify": "v. 识别；辨认；确认",
+  "perceive": "v. 察觉；感知；认识到",
+  "acknowledge": "v. 承认；确认；致谢",
+  "understand": "v. 理解；懂得；了解",
+  "know": "v. 知道；了解；认识",
+  "realize": "v. 意识到；实现；了解",
+
+  // === 模仿与复制 ===
+  "copy": "v./n. 复制；抄袭；副本",
+  "imitate": "v. 模仿；仿效",
+  "imitation": "n. 模仿；仿制品",
+  "mimic": "v./n. 模仿；模仿者",
+  "replicate": "v. 复制；重复",
+  "duplicate": "v./adj. 复制；重复的",
+  "follow": "v. 跟随；遵循；仿效",
+
+  // === 弱势与贫穷 ===
+  "poor": "adj. 贫穷的；贫困的；差的",
+  "deprived": "adj. 被剥夺的；贫困的",
+  "socially-disadvantaged": "adj. 社会弱势群体的",
+  "vulnerable": "adj. 脆弱的；易受伤害的",
+
+  "recently": "adv. 最近；新近",
+  "put forward": "提出；推进",
+
+  // === 疾病与健康 ===
+  "disease": "n. 疾病；病害",
+  "illness": "n. 疾病；生病",
+  "disorder": "n. 紊乱；失调；疾病",
+  "ailments": "n. 小病；疾病",
+  "sickness": "n. 疾病；呕吐；不适",
+  "malady": "n. 疾病；弊病",
+  "health problem": "健康问题",
+
+  // === 变化与改变 ===
+  "change": "v./n. 改变；变化；更换",
+  "become different": "变得不同；发生变化",
+  "vary": "v. 变化；改变；不同",
+  "alter": "v. 改变；修改；变更",
+  "adjust": "v. 调整；适应；校正",
+  "shift": "v./n. 移动；转变；改变",
+  "switch": "v./n. 转换；切换；开关",
+
+  // === 想法与灵感 ===
+  "idea": "n. 想法；主意；观念",
+  "inspiration": "n. 灵感；鼓舞；妙计",
+  "conceive of": "构思；想象；设想",
+  "theory": "n. 理论；学说；看法",
+  "perception": "n. 感知；认识；看法",
+
+  // === 达成与完成 ===
+  "achieve": "v. 达成；实现；完成",
+  "accomplish": "v. 完成；实现；达成",
+  "reach": "v. 达到；抵达；n. 范围",
+  "fulfill": "v. 满足；履行；实现",
+  "succeed in": "成功于；在...方面成功",
+  "complete": "v./adj. 完成；完全的",
+  "carry out": "执行；实施；进行",
+  "finish": "v. 完成；结束",
+
+  // === 食物与农业 ===
+  "food": "n. 食物；食品",
+  "agriculture": "n. 农业；农学",
+  "crops": "n. 农作物；庄稼；收成",
+  "farming": "n. 农业；耕作",
+  "fodder": "n. 饲料；素材",
+  "diet": "n. 饮食；节食；日常食物",
+  "delicacy": "n. 佳肴；精致；微妙",
+
+  // === 适合与符合 ===
+  "suit": "v. 适合；n. 套装；诉讼",
+  "in keeping with": "符合；与...一致",
+  "according to": "根据；按照",
+  "in accordance with": "依照；与...一致",
+  "fit": "v./adj. 适合；合身的；健康的",
+  "agree with": "同意；与...一致；适合",
+
+  // === 路径与路线 ===
+  "track": "n. 轨道；跑道；踪迹",
+  "path": "n. 路径；道路；小路",
+  "road": "n. 道路；公路",
+  "route": "n. 路线；航线；途径",
+  "trail": "n. 小径；痕迹；v. 跟踪",
+
+  // === 武器与工具 ===
+  "weapons": "n. 武器；兵器",
+  "arrows and bows": "弓箭",
+  "gun": "n. 枪；炮",
+  "knife": "n. 刀；匕首；刀子",
+  "bomb": "n. 炸弹；v. 轰炸",
+
+  // === 增加与上升 ===
+  "increase": "v./n. 增加；增长；上升",
+  "rise": "v./n. 上升；上涨；兴起",
+  "grow": "v. 增长；生长；发展",
+  "ascend": "v. 上升；攀登；升高",
+  "expand": "v. 扩张；膨胀；扩展",
+  "soar": "v. 飙升；翱翔；猛增",
+  "surge": "v./n. 激增；汹涌；涌现",
+  "burst": "v./n. 爆发；突发；爆裂",
+  "boost": "v./n. 促进；提高；推动",
+  "escalate": "v. 升级；逐步升高；加剧",
+
+  // === 显示与表明 ===
+  "show": "v./n. 显示；展示；表明",
+  "indicate": "v. 表明；指出；指示",
+  "demonstrate": "v. 证明；演示；展示",
+  "illustrate": "v. 说明；阐明；举例说明",
+  "reveal": "v. 揭示；显示；透露",
+  "display": "v./n. 显示；展示；陈列",
+  "exhibit": "v./n. 展出；显示；表现",
+  "manifest": "v./adj. 显示；表明；明显的",
+
+  // === 测量与评估 ===
+  "measure": "v./n. 测量；措施；程度",
+  "calculate": "v. 计算；估算；计划",
+  "assess": "v. 评估；估价；评价",
+  "check": "v./n. 检查；核对；控制",
+  "evaluate": "v. 评价；评估；估价",
+  "estimate": "v./n. 估计；估算；评估",
+
+  "step": "n./v. 步骤；措施；脚步",
+  "methods": "n. 方法；方式",
+  "degree": "n. 程度；度数；学位",
+  "amount": "n./v. 数量；总额；总计",
+  "way of judging": "判断的方式",
+  "action": "n. 行动；行为；作用",
+
+  // === 忽视与忽略 ===
+  "ignore": "v. 忽视；不理睬；忽略",
+  "neglect": "v./n. 忽视；疏忽；忽略",
+  "overlook": "v. 忽视；俯瞰；忽略",
+  "pay no attention": "不注意；不理睬",
+  "take no notice": "不注意；不理会",
+  "fail to take into account": "未能考虑到",
+
+  // === 传统与常规 ===
+  "traditional": "adj. 传统的；惯例的",
+  "conventional": "adj. 传统的；常规的；约定的",
+  "normal and ordinary": "正常普通的；平常的",
+  "well-known": "adj. 著名的；众所周知的",
+
+  // === 全球与国际 ===
+  "worldwide": "adj./adv. 全球的；全世界范围",
+  "a number of countries": "一些国家；许多国家",
+  "global": "adj. 全球的；全球性的",
+  "international": "adj. 国际的；国际间的",
+  "different cultures": "不同的文化",
+  "around the world": "世界各地；全世界",
+  "in the world": "在世界上；究竟",
+
+  "public": "adj./n. 公共的；公众；公开",
+  "communal": "adj. 公共的；公有的；社区的",
+  "shared": "adj. 共享的；共同的",
+
+  "interpret": "v. 解释；口译；理解",
+  "comprehend": "v. 理解；领会；包含",
+  "follow": "v. 跟随；理解；遵循",
+  "grasp": "v./n. 抓住；掌握；领会",
+
+  // === 控制与操纵 ===
+  "control": "v./n. 控制；管理；抑制",
+  "master": "v./n./adj. 掌握；主人；主要的",
+  "harness": "v./n. 利用；治理；马具",
+  "manipulate": "v. 操纵；操作；控制",
+  "able to exercise power": "能够行使权力",
+  "engage sb in": "使某人参与；使忙于",
+
+  // === 数据与信息 ===
+  "data": "n. 数据；资料；信息",
+  "information": "n. 信息；资料；情报",
+
+  // === 敌人与对手 ===
+  "enemy": "n. 敌人；敌军；危害",
+  "foe": "n. 敌人；仇敌；反对者",
+  "opponent": "n. 对手；反对者；敌手",
+  "rival": "n./v./adj. 竞争对手；与...匹敌",
+
+  "beat": "v./n. 打败；击败；跳动",
+  "not live up to": "不辜负；达到预期标准",
+  "defeat": "v./n. 击败；挫败；失败",
+
+  "historical and religious value": "历史与宗教价值",
+  "western societies": "西方社会",
+
+  "period": "n. 时期；周期；时间段",
+  "for days": "数天；持续数日",
+  "months": "n. 月份；数月",
+  "years": "n. 年；多年；数年",
+  "last about years": "持续约数年",
+  "hours": "n. 小时；时间；课时",
+
+  // === 错误与失误 ===
+  "incorrect": "adj. 不正确的；错误的",
+  "wrong": "adj./adv./n. 错误的；错误；坏事",
+  "misguided": "adj. 被误导的；误入歧途的",
+  "inaccurate": "adj. 不准确的；错误的",
+  "mistake": "n./v. 错误；误解；弄错",
+  "fault": "n. 错误；缺点；故障",
+
+  // === 支持与拥护 ===
+  "back": "v./n./adv. 支持；背后；返回",
+  "support": "v./n. 支持；支撑；拥护",
+  "advocate": "v./n. 拥护；提倡；倡导者",
+  "sponsor": "v./n. 赞助；发起；赞助商",
+  "endorse": "v. 支持；背书；赞同",
+
+  "differ": "v. 不同；意见分歧；不一致",
+  "in different ways depending on": "根据...以不同方式",
+
+  // === 主要与首要 ===
+  "main": "adj. 主要的；最重要的",
+  "chief": "adj./n. 主要的；首领；酋长",
+  "primary": "adj. 主要的；首要的；初级的",
+  "principal": "adj./n. 主要的；校长；本金",
+  "major": "adj./v./n. 主要的；主修；专业",
+
+  // === 适应与修改 ===
+  "adapt": "v. 适应；改编；修改",
+  "use many different": "使用许多不同的",
+  "modify": "v. 修改；改变；修饰",
+  "in order to deal with": "为了处理；为了应付",
+
+  // === 气候与天气 ===
+  "climate": "n. 气候；风气；环境",
+  "in the hot sun": "在烈日下",
+  "weather": "n. 天气；气候；v. 经受",
+
+  "unconventional": "adj. 非常规的；不传统的",
+  "odd": "adj. 奇怪的；古怪的；奇数的",
+  "rare": "adj. 稀有的；罕见的；稀薄的",
+  "strange": "adj. 奇怪的；陌生的；奇特的",
+  "different from other": "与其他不同的",
+  "obscure": "adj./v. 模糊的；晦涩；使模糊",
+
+  // === 流行与普遍 ===
+  "popular": "adj. 流行的；受欢迎的；大众的",
+  "be accepted on a large scale": "被大规模接受",
+  "prevalent": "adj. 流行的；普遍的；盛行的",
+  "common": "adj. 共同的；普通的；常见的",
+  "ordinary": "adj. 普通的；平常的；平凡的",
+
+  // === 目的与意图 ===
+  "aim": "n./v. 目的；目标；瞄准",
+  "goal": "n. 目标；目的；球门",
+  "purpose": "n. 目的；用途；意志",
+  "intention": "n. 意图；目的；打算",
+  "objective": "n./adj. 目标；客观的；目的",
+  "want to": "想要；希望",
+  "be to do": "是要做；打算做",
+  "intend to": "打算；想要；计划",
+
+  // === 不满与抱怨 ===
+  "dissatisfy": "v. 使不满；使不满足",
+  "complain about": "抱怨；投诉",
+  "not content with": "不满足于；不满意",
+
+  "agreeable": "adj. 令人愉快的；适合的；同意的",
+  "pleasant": "adj. 令人愉快的；舒适的；友好的",
+  "enjoyable": "adj. 令人愉快的；有趣的",
+  "friendly": "adj. 友好的；友善的；温和的",
+
+  // === 储存与积累 ===
+  "store": "v./n. 储存；商店；储备",
+  "lock in": "锁定；锁住；储存",
+  "accumulate": "v. 积累；积聚；堆积",
+  "collect": "v. 收集；聚集；募捐",
+  "gather": "v. 聚集；收集；推断",
+  "hoard": "v./n. 囤积；贮藏；秘藏",
+  "keep": "v. 保持；保存；保留",
+
+  // === 特征与属性 ===
+  "feature": "n./v. 特征；特色；以...为特色",
+  "characteristics": "n. 特征；特点；特性",
+  "trait": "n. 特质；特点；特性",
+  "property": "n. 属性；财产；性质",
+  "attribute": "n./v. 属性；特质；归因于",
+
+  // === 多数与大部分 ===
+  "most": "adj./adv./n. 最多的；大多数；最",
+  "the majority of": "...的大多数；大部分",
+  "over half of": "超过一半的；过半",
+
+  // === 替代与取代 ===
+  "replace": "v. 取代；代替；更换",
+  "displace": "v. 取代；移置；置换",
+  "supersede": "v. 取代；代替；废弃",
+  "take the place of": "代替；取代",
+  "substitute": "v./n. 代替；替代品；替补",
+
+  // === 标志与象征 ===
+  "sign": "n./v. 标志；符号；签名；示意",
+  "symbol": "n. 符号；象征；标志",
+  "indication": "n. 指示；迹象；象征",
+  "signal": "n./v. 信号；标志；发信号",
+  "token": "n. 象征；代币；记号",
+  "mark": "n./v. 标志；标记；分数",
+
+  // === 许多与大量 ===
+  "many": "adj./pron. 许多的；很多",
+  "a great deal of": "大量的；许多的",
+  "a considerable amount of": "相当数量的；大量的",
+  "a lot of": "许多的；大量的",
+  "numerous": "adj. 众多的；许多的",
+  "plenty of": "大量的；充足的",
+  "quite a few": "相当多的；不少的",
+  "a large number of": "大量的；许多的",
+
+  // === 食用与捕食 ===
+  "feed on": "以...为食；靠...为生",
+  "consume": "v. 消费；消耗；大吃大喝",
+  "prey on": "捕食；掠夺；折磨",
+
+  // === 发展与进步 ===
+  "development": "n. 发展；开发；进展",
+  "progress": "n./v. 进步；进展；前进",
+  "improvement": "n. 改进；改善；进步",
+  "advance": "v./n. 前进；进步；进展",
+  "enhancement": "n. 增强；提高；改进",
+  "evolution": "n. 进化；演变；发展",
+  "growth": "n. 生长；增长；发展",
+
+  // === 起源与基础 ===
+  "based on": "基于；以...为基础",
+  "have its origins in": "起源于；根源在于",
+  "have its roots in": "根植于；根源于",
+  "derive from": "源于；来自；从...得到",
+  "evolve from": "从...演变而来",
+
+  // === 由于与原因 ===
+  "thanks to": "由于；幸亏；多亏",
+  "due to": "由于；因为；应归于",
+  "stem from": "起源于；来自；由...造成",
+
+  // === 执行与实施 ===
+  "perform": "v. 执行；表演；履行",
+  "execute": "v. 执行；实施；处决",
+  "implement": "v./n. 实施；执行；工具",
+  "conduct": "v./n. 进行；实施；行为",
+  "undertake": "v. 承担；从事；保证",
+
+  // === 失败与未能 ===
+  "fail to": "未能；没能；做不到",
+  "without": "prep./adv. 没有；不；无",
+  "not do": "不做；没有做",
+  "unable to": "不能；无法；做不到",
+  "bungle": "v./n. 搞砸；拙劣地做；失误",
+
+  // === 依赖与依靠 ===
+  "depend on": "依赖；依靠；取决于",
+  "rely on": "依赖；依靠；信任",
+  "count on": "依赖；指望；依靠",
+  "be dependent on": "依赖于；依靠于",
+
+  // === 支持与有益 ===
+  "back up": "支持；备份；倒退",
+  "favor": "v./n. 支持；喜爱；恩惠",
+  "promote": "v. 促进；提升；推广",
+  "useful": "adj. 有用的；有益的",
+  "beneficial": "adj. 有益的；有利的",
+
+  // === 考虑与关于 ===
+  "given that": "考虑到；鉴于；由于",
+  "considering": "prep./conj. 考虑到；鉴于",
+  "concerning": "prep. 关于；就...而言",
+
+  // === 重新关注 ===
+  "renewed interest": "重新产生兴趣；再度关注",
+  "focus once again on": "再次聚焦于；重新关注",
+
+  // === 倾向与可能 ===
+  "be more likely to": "更有可能；更倾向于",
+  "be feel more obliged to": "感到更有义务；被迫更需",
+  "be feel inclined to": "感到倾向于；觉得想要",
+  "be liable to": "易于；有...倾向；可能",
+  "be prone to": "易于；有...倾向；容易",
+
+  // === 可持续与长期 ===
+  "sustainable": "adj. 可持续的；能维持的",
+  "environmental": "adj. 环境的；环保的",
+  "ecology": "n. 生态学；生态",
+  "long-term": "adj. 长期的；长远的",
+  "chronic": "adj. 慢性的；长期的；持久的",
+
+  // === 复杂与困难 ===
+  "complex": "adj./n. 复杂的；综合体；情结",
+  "complicated": "adj. 复杂的；难懂的",
+  "perplexing": "adj. 令人困惑的；复杂的",
+  "confusing": "adj. 令人困惑的；混淆的",
+  "sophisticated": "adj. 复杂的；精密的；老练的",
+
+  "buildings": "n. 建筑物；建筑；大楼",
+  "constructions": "n. 建设；建筑物；构造",
+
+  // === 容器与制品 ===
+  "vessels": "n. 船只；容器；血管",
+  "artifacts": "n. 人工制品；文物",
+  "artefacts": "n. 人工制品；文物",
+  "ornaments": "n. 装饰；装饰品",
+  "containers": "n. 容器；集装箱；货柜",
+  "jars": "n. 罐子；广口瓶；震动",
+
+  "ships": "n. 船；舰；v. 运输",
+  "large boats": "大型船只",
+
+  // === 分类与识别 ===
+  "classify": "v. 分类；归类；分等级",
+  "categorize": "v. 分类；归类",
+  "be divided into distinct types": "被分成不同类型",
+  "taxonomy": "n. 分类学；分类法",
+  "methods for assessing": "评估的方法",
+
+  // === 对比与相反 ===
+  "contrast": "n./v. 对比；对照；反差",
+  "rather than": "而不是；与其...不如",
+  "instead of": "代替；而不是",
+  "two opposing views": "两种相反的观点",
+
+  // === 预测与预报 ===
+  "predict": "v. 预测；预言；预报",
+  "projection": "n. 预测；规划；投影",
+  "forecast": "v./n. 预报；预测；展望",
+
+  // === 弱点与缺陷 ===
+  "weaknesses": "n. 弱点；缺点；虚弱",
+  "bad aspects": "不好的方面；负面因素",
+  "disadvantages": "n. 缺点；劣势；不利条件",
+  "drawbacks": "n. 缺点；弊端；障碍",
+  "demerits": "n. 缺点；过失；记过",
+
+  "strengths": "n. 优势；长处；强项",
+  "good aspects": "好的方面；优点",
+  "advantages": "n. 优势；好处；有利条件",
+  "merits": "n. 优点；价值；功绩",
+
+  // === 抛弃与遗弃 ===
+  "discard": "v. 丢弃；抛弃；遗弃",
+  "abandon": "v. 放弃；抛弃；遗弃",
+  "being left behind": "被遗留；被甩在后面",
+  "disposed of": "被处理掉；被丢弃",
+  "cast off": "抛弃；丢弃；摆脱",
+  "get rid of": "摆脱；除去；处理掉",
+
+  // === 性格与特征 ===
+  "personality": "n. 性格；个性；人格",
+  "character": "n. 性格；品质；角色",
+  "temperament": "n. 气质；性情；性格",
+
+  "warning": "n./adj. 警告；警示；告诫",
+  "cautionary": "adj. 警告的；告诫的；警示的",
+  "convince show against": "说服反对；展示反对",
+
+  // === 咨询与请教 ===
+  "consult": "v. 咨询；请教；商议",
+  "ask for advice": "征求意见；请教",
+  "discuss with": "与...讨论；与...商议",
+  "confer": "v. 商议；授予；讨论",
+
+  // === 出现与显现 ===
+  "emerge": "v. 出现；浮现；显现",
+  "appear": "v. 出现；似乎；显得",
+  "become visible": "变得可见；显现出来",
+  "come into view": "进入视野；出现",
+  "come out": "出来；出版；出现",
+  "show out": "出现；显现；展示",
+
+  // === 标准与基准 ===
+  "criteria": "n. 标准；准则；条件",
+  "standard": "n./adj. 标准；规格；标准的",
+  "level": "n./v. 水平；级别；使平整",
+  "norm": "n. 规范；标准；常态",
+  "benchmark": "n./v. 基准；标杆；基准测试",
+
+  // === 领域与学科 ===
+  "domain": "n. 领域；范围；定义域",
+  "area": "n. 面积；区域；领域",
+  "field": "n. 领域；田野；运动场",
+  "subject": "n./v./adj. 主题；科目；使服从",
+  "discipline": "n./v. 学科；纪律；训练",
+
+  // === 证据与迹象 ===
+  "evidence": "n./v. 证据；证明；表明",
+  "clues": "n. 线索；提示；迹象",
+  "facts or signs": "事实或迹象；证据",
+  "proof": "n./v. 证明；证据；校样",
+
+  // === 明显与区别 ===
+  "distinct": "adj. 明显的；独特的；清楚的",
+  "different": "adj. 不同的；分别的；个别的",
+  "differ from": "不同于；与...不同",
+  "distinguish": "v. 区分；辨别；分清",
+  "diverse": "adj. 多样的；不同的；多元的",
+
+  // === 发布与发行 ===
+  "release": "v./n. 释放；发布；发行",
+  "issue": "v./n. 发行；发布；问题",
+  "launch": "v./n. 发起；发射；推出",
+  "publish": "v. 出版；发行；发表",
+
+  // === 保持与维持 ===
+  "maintain": "v. 保持；维护；主张",
+  "ensure": "v. 确保；保证；担保",
+  "remain": "v. 保持；剩下；仍然是",
+  "make at the same level": "保持在同一水平",
+  "continue to": "继续；持续",
+
+  // === 事件与发生 ===
+  "incident": "n. 事件；事变；插曲",
+  "events": "n. 事件；大事；赛事",
+  "happening": "n. 事件；发生的事",
+  "occurrence": "n. 发生；事件；出现",
+
+  // === 潮湿与湿润 ===
+  "damp": "adj./v./n. 潮湿的；潮湿；使潮湿",
+  "wet": "adj./v./n. 湿的；弄湿；潮湿",
+  "moist": "adj. 潮湿的；湿润的；多雨的",
+  "moisture": "n. 水分；湿度；潮湿",
+  "humid": "adj. 潮湿的；湿润的",
+  "soaked": "adj. 湿透的；浸透的",
+
+  // === 培养与养育 ===
+  "foster": "v./adj. 培养；养育；收养的",
+  "cultivate": "v. 培养；耕种；发展",
+  "raise": "v./n. 养育；提高；筹集",
+  "nurture": "v./n. 养育；培养；滋养",
+  "rear": "v./n. 抚养；养育；后面",
+  "look after": "照顾；照料；照看",
+
+  // === 灭绝与消失 ===
+  "extinct": "adj. 灭绝的；绝种的；熄灭的",
+  "die out": "灭绝；消失；淘汰",
+  "disappear": "v. 消失；不见；失踪",
+  "vanish": "v. 消失；突然不见；绝迹",
+  "no longer exist": "不再存在；已消失",
+
+  // === 寒冷与冰冷 ===
+  "chilly": "adj. 寒冷的；冷淡的；阴冷的",
+  "cold temperature": "低温；寒冷的温度",
+  "freezing": "adj./n. 冰冷的；严寒；冻结",
+
+  // === 逃脱与避免 ===
+  "escape": "v./n. 逃脱；逃避；逃跑",
+  "avoid": "v. 避免；避开；防止",
+  "steer clear of": "避开；绕开；远离",
+  "keep away": "远离；保持距离；避开",
+  "elude": "v. 逃避；躲避；使困惑",
+
+  // === 广告与营销 ===
+  "advertising": "n. 广告；广告业；广告活动",
+  "marketing": "n. 营销；销售；市场营销",
+  "commercial": "adj./n. 商业的；广告；商务的",
+
+  "market": "n./v. 市场；营销；推销",
+  "profit": "n./v. 利润；获利；益处",
+  "profitable": "adj. 有利可图的；盈利的",
+  "lucrative": "adj. 有利可图的；赚钱的",
+  "investment": "n. 投资；投入；投资额",
+  "invest": "v. 投资；投入；花费",
+
+  // === 混合与结合 ===
+  "mixture": "n. 混合；混合物；混合剂",
+  "combination": "n. 结合；组合；联合",
+  "combine": "v. 结合；联合；化合",
+  "a cocktail of": "一种...的混合物；综合的",
+  "mixing": "n. 混合；搅拌；混录",
+  "blend": "v./n. 混合；调和；融合",
+  "integrate": "v. 整合；融合；使一体化",
+  "integration": "n. 整合；融合；一体化",
+  "merge": "v. 合并；融合；并入",
+  "conflate": "v. 合并；混合；混为一谈",
+  "incorporate": "v. 合并；包含；吸收",
+
+  // === 限制与约束 ===
+  "limitation": "n. 限制；局限；不足之处",
+  "restriction": "n. 限制；约束；规定",
+  "limit": "n./v. 限制；界限；边界",
+  "not enough degree of freedom": "自由度不够；缺乏自由",
+
+  // === 社区与公众 ===
+  "community": "n. 社区；团体；共同体",
+  "a cross-section of society": "社会的一个横截面",
+  "general public": "公众；普通大众",
+
+  // === 情绪与焦虑 ===
+  "emotions": "n. 情绪；情感；感情",
+  "anxiety": "n. 焦虑；忧虑；渴望",
+  "feelings": "n. 感情；感受；情绪",
+  "sentimental": "adj. 情感的；感伤的；多情的",
+
+  // === 牲畜与动物 ===
+  "livestock": "n. 牲畜；家畜；家禽",
+  "animals": "n. 动物；牲畜",
+  "sheep": "n. 羊；绵羊；胆小鬼",
+  "cattle": "n. 牛；家畜；牲畜",
+
+  // === 福利与健康 ===
+  "welfare": "n. 福利；幸福；安宁",
+  "well-being": "n. 幸福；福祉；健康",
+  "the general health": "总体健康；普遍健康",
+  "standard of living": "生活水平；生活标准",
+
+  "remains": "n. 剩余物；遗迹；遗体",
+  "bones": "n. 骨骼；骨头；主体",
+  "that are left": "剩下的；遗留的",
+
+  // === 不足与缺乏 ===
+  "inadequate": "adj. 不充分的；不足的；不适当的",
+  "limited": "adj. 有限的；受限制的",
+  "not enough": "不够的；不足的",
+  "too little": "太少的；不足的",
+  "few": "adj./pron. 少数的；很少",
+  "scarce": "adj. 缺乏的；稀有的；不足的",
+  "insufficient": "adj. 不足的；不充分的",
+  "shortage": "n. 缺乏；不足；缺少",
+
+  "subsidy": "n. 补贴；津贴；补助金",
+  "financial assistance": "财政援助；经济援助",
+
+  // === 降水与降雨 ===
+  "precipitation": "n. 降水量；降雨；沉淀",
+  "rainfall": "n. 降雨量；降雨；降水",
+  "snowfall": "n. 降雪；降雪量",
+  "hail": "n./v. 冰雹；招呼；致敬",
+
+  // === 独立与自主 ===
+  "independent": "adj. 独立的；自主的；无党派的",
+  "self-reliant": "adj. 自力更生的；依靠自己的",
+  "depend on themselves": "依靠他们自己",
+  "himself or herself": "他自己或她自己；独立地",
+
+  // === 服从与遵守 ===
+  "obey": "v. 服从；遵守；顺从",
+  "comply with": "遵守；依从；顺从",
+  "abide by": "遵守；信守；承担...的后果",
+
+  // === 不信任与怀疑 ===
+  "distrust": "v./n. 不信任；怀疑",
+  "suspicion and disbelief": "怀疑与不相信",
+  "skeptic": "n. 怀疑者；怀疑论者",
+  "sceptic": "n. 怀疑者；怀疑论者",
+  "skeptical": "adj. 怀疑的；持怀疑态度的",
+
+  // === 积极与有益 ===
+  "positive aspects": "积极方面；正面因素",
+  "better at": "更擅长；在...更好",
+  "favorable": "adj. 有利的；良好的；赞成的",
+  "advantageous": "adj. 有利的；有益的",
+
+  // === 城市与市政 ===
+  "civil": "adj. 公民的；民事的；文明的",
+  "municipal": "adj. 市政的；市的；地方自治的",
+  "metropolitan": "adj. 大都市的；宗主国的",
+  "urban": "adj. 城市的；都市的；城镇的",
+
+  // === 生产与创造 ===
+  "productive": "adj. 多产的；富有成效的",
+  "creative": "adj. 创造性的；有创造力的",
+  "inspiring": "adj. 鼓舞人心的；激励的",
+  "active": "adj. 积极的；活跃的；主动的",
+  "fruitful": "adj. 多产的；富有成效的",
+  "inventive": "adj. 有发明才能的；创新的",
+
+  // === 疲劳与疲惫 ===
+  "fatigue": "n./v. 疲劳；疲乏；使疲劳",
+  "tiredness": "n. 疲劳；疲倦；劳累",
+  "exhausted": "adj. 疲惫的；耗尽的；精疲力竭的",
+
+  // === 年幼与幼小 ===
+  "juvenile": "adj./n. 青少年的；幼稚的；青少年",
+  "small": "adj. 小的；少的；不重要的",
+  "young": "adj./n. 年轻的；年幼的；年轻人",
+  "cubs": "n. 幼崽；幼年动物；童子军",
+
+  // === 基本与基础 ===
+  "fundamental": "adj./n. 基本的；根本的；基础",
+  "rudimentary": "adj. 基本的；初步的；未成熟的",
+  "preliminary": "adj./n. 初步的；预备的；初赛",
+  "basic": "adj./n. 基本的；基础的；基本要素",
+
+  // === 最初与开始 ===
+  "initial": "adj./n. 最初的；开始的；首字母",
+  "at first": "起初；首先；最初",
+  "start": "v./n. 开始；启动；起点",
+  "early on": "在早期；初期；刚开始",
+  "premiere": "n./v. 首次公演；首映；首演",
+
+  // === 缺陷与不足 ===
+  "defect": "n./v. 缺陷；缺点；背叛",
+  "disadvantage": "n. 缺点；不利；劣势",
+  "shortage": "n. 短缺；不足；缺乏",
+  "downside": "n. 缺点；不利方面；负面",
+  "weakness": "n. 弱点；缺点；虚弱",
+  "limitation": "n. 限制；局限；不足之处",
+
+  // === 地点与场所 ===
+  "venue": "n. 地点；场所；举办地",
+  "place": "n./v. 地方；地点；放置",
+  "spot": "n./v. 地点；场所；发现；斑点",
+  "site": "n./v. 地点；位置；场所；设置",
+
+  // === 可行与实际 ===
+  "feasible": "adj. 可行的；可能的；可实现的",
+  "practical": "adj. 实际的；实用的；实践的",
+  "attainable": "adj. 可达到的；可实现的",
+  "workable": "adj. 可操作的；可行的；可使用的",
+
+  // === 冲动与推动 ===
+  "urge": "v./n. 催促；强烈欲望；推动",
+  "desire": "n./v. 渴望；欲望；要求",
+  "impulse": "n./v. 冲动；推动；刺激",
+  "instinct": "n. 本能；直觉；天性",
+  "advise": "v. 建议；劝告；通知",
+  "call for": "要求；呼吁；需要",
+  "have strong wish to do": "有强烈愿望做某事",
+  "push": "v./n. 推动；催促；推进",
+  "press": "v./n. 按压；催促；新闻界",
+
+  // === 暗示与线索 ===
+  "cue": "n./v. 暗示；提示；线索",
+  "hint": "n./v. 暗示；提示；线索",
+  "clue": "n. 线索；提示；暗示",
+
+  // === 人工与合成 ===
+  "artificial": "adj. 人造的；人工的；虚假的",
+  "synthetic": "adj./n. 合成的；人造的；合成物",
+  "man-made": "adj. 人造的；人工的；人为的",
+
+  // === 察觉与发现 ===
+  "detect": "v. 察觉；发现；探测",
+  "find": "v./n. 发现；找到；查找",
+  "discover or notice": "发现或注意到",
+  "perceive": "v. 察觉；感知；认识到",
+  "recognise": "v. 认出；承认；认可",
+
+  // === 周围与环境 ===
+  "surrounding": "n./adj. 周围的事物；环境；周围的",
+  "setting": "n. 背景；环境；设置；场景",
+
+  // === 威胁与危及 ===
+  "threaten": "v. 威胁；恐吓；危及",
+  "warn": "v. 警告；提醒；告诫",
+  "endanger": "v. 危及；使遭危险；危害",
+  "jeopardise": "v. 危及；使陷于险境；损害",
+  "risk": "n./v. 风险；危险；冒险",
+  "hazard": "n./v. 危险；危害；冒险",
+  "intimidate": "v. 恐吓；威胁；胁迫",
+
+  // === 落后与原始 ===
+  "backward": "adj./adv. 向后的；落后的；向后",
+  "primitive": "adj./n. 原始的；落后的；原始人",
+  "underdeveloped": "adj. 不发达的；发展不足的",
+
+  // === 交换与交易 ===
+  "exchange": "v./n. 交换；交易；兑换",
+  "swap and share": "交换和分享",
+  "switch": "v./n. 转换；开关；交换",
+  "trade": "v./n. 贸易；交易；买卖",
+
+  // === 分离与隔开 ===
+  "separate": "v./adj. 分离；分开；独立的",
+  "divide": "v. 分开；划分；除以",
+  "move apart": "分开；移开；分离",
+  "segregate": "v. 隔离；分离；分开",
+
+  // === 组织与机构 ===
+  "establishment": "n. 建立；机构；确立",
+  "shop": "n./v. 商店；店铺；购物",
+  "hotel": "n. 旅馆；酒店；饭店",
+  "organization": "n. 组织；机构；团体",
+  "institution": "n. 机构；制度；建立",
+
+  // === 分析与检查 ===
+  "analyse": "v. 分析；解析；研究",
+  "look at": "看；考虑；着眼于",
+  "examine": "v. 检查；审查；调查",
+
+  // === 准确与精确 ===
+  "accurate": "adj. 准确的；精确的；正确的",
+  "precise": "adj. 精确的；准确的；严格的",
+  "exact": "adj./v. 精确的；准确的；要求",
+  "fewer errors": "更少的错误；失误较少",
+  "flawless": "adj. 完美的；无瑕疵的；无缺点的",
+  "negligible mistakes": "可忽略的错误；微不足道的失误",
+
+  // === 丰富与充足 ===
+  "abundant": "adj. 丰富的；充裕的；充足的",
+  "sufficient": "adj. 足够的；充分的；充足的",
+  "adequate": "adj. 足够的；充分的；适当的",
+  "ample": "adj. 丰富的；充足的；宽敞的",
+  "substantial": "adj. 大量的；实质的；坚固的",
+  "considerable": "adj. 相当大的；重要的；值得考虑的",
+
+  // === 克服与解决 ===
+  "overcome": "v. 克服；战胜；解决",
+  "conquer": "v. 征服；战胜；克服",
+  "get over": "克服；恢复；熬过",
+  "prevent": "v. 阻止；预防；防止",
+
+  // === 优先与重要 ===
+  "priority": "n. 优先；优先权；优先事项",
+  "most important": "最重要的；首要的",
+  "preferential": "adj. 优先的；优惠的；特殊的",
+  "preference": "n. 偏好；偏爱；优先权",
+
+  // === 灵活与多样 ===
+  "flexibility": "n. 灵活性；柔韧性；弹性",
+  "versatile": "adj. 多才多艺的；多功能的；通用的",
+  "adaptable": "adj. 适应性强的；可改编的",
+  "all-round": "adj. 全面的；多方面的；全能的",
+
+  // === 独家与唯一 ===
+  "exclusive": "adj. 独有的；排外的；高级的",
+  "unique": "adj. 独特的；唯一的；独一无二的",
+  "sole": "adj./n. 唯一的；单独的；鞋底；比目鱼",
+  "only": "adv./adj. 只有；唯一的；仅仅",
+  "restricted": "adj. 受限制的；保密的；有限的",
+
+  // === 可及与可用 ===
+  "accessible": "adj. 可接近的；可进入的；易接近的",
+  "reachable": "adj. 可到达的；可获得的；可联系的",
+  "attainable": "adj. 可达到的；可实现的",
+  "obtainable": "adj. 可获得的；可得到的",
+  "available": "adj. 可用的；有空的；可获得的",
+
+  "unlike standard": "与标准不同；不同于常规的",
+  "different from the usual or traditional": "不同于通常或传统的",
+
+  // === 困惑与不清 ===
+  "lack of clarity": "缺乏清晰度；不清楚",
+  "have unconscious notions": "有无意识的观念；有潜意识的想法",
+  "no one knows for certain": "没有人确切知道；没人能确定",
+
+  // === 遭受与接触 ===
+  "be subjected to": "遭受；承受；服从于",
+  "undergo": "v. 经历；遭受；承受",
+  "be exposed to": "暴露于；接触；面临",
+  "suffer from": "遭受；受...之苦；患...病",
+  "be afflicted with": "受...折磨；患有...病",
+
+  "benefit the ecosystem": "有益于生态系统；对生态系统有利",
+  "recover the biodiversity": "恢复生物多样性；修复生物多样性",
+
+  "less cooperative": "不太合作的；合作意愿较低的",
+  "lack of willingness to": "缺乏意愿；不愿意",
+
+  // === 外来与本土 ===
+  "alien": "adj./n. 外国的；陌生的；外星人",
+  "not local": "非本地的；外地的",
+  "not native": "非本土的；非原生的",
+  "outsider": "n. 外人；外部人士；门外汉",
+  "not indigenous": "非本土的；非原生的",
+
+  // === 矛盾与反驳 ===
+  "contradict": "v. 反驳；与...矛盾；否认",
+  "paradoxical": "adj. 矛盾的；似是而非的；悖论的",
+  "refute": "v. 反驳；驳斥；否定",
+  "dispute": "v./n. 争论；辩论；争端",
+
+  // === 礼貌与礼仪 ===
+  "etiquette": "n. 礼仪；礼节；规矩",
+  "good manner": "良好的礼仪；有礼貌",
+  "polite": "adj. 有礼貌的；客气的；文雅的",
+  "politeness": "n. 礼貌；优雅；客气",
+  "respect": "n./v. 尊重；尊敬；方面",
+
+  // === 消失与减退 ===
+  "evaporate": "v. 蒸发；消失；消散",
+  "fade away": "逐渐消失；褪色；渐渐离去",
+  "become less": "变得更少；减少",
+
+  "diminish": "v. 减少；降低；削弱",
+  "decrease": "v./n. 减少；下降；减小",
+  "reduce": "v. 减少；降低；缩小",
+  "drop": "v./n. 下降；落下；滴落",
+  "fall": "v./n. 下降；落下；跌倒；秋天",
+  "lower": "v./adj. 降低；较低的；下方的",
+  "shrink": "v. 收缩；缩小；退缩",
+  "minimize": "v. 最小化；尽量减少；轻视",
+
+  // === 声誉与地位 ===
+  "prestige": "n. 声望；威望；声誉",
+  "symbol of status": "地位的象征；身份象征",
+  "social position": "社会地位；社会身份",
+  "reputation": "n. 名声；声誉；名誉",
+
+  // === 含义与暗示 ===
+  "implications": "n. 含义；暗示；牵连",
+  "hidden effects": "隐藏的影响；潜在效果",
+  "implies or suggests": "暗示或表明；意味着",
+  "consequence": "n. 结果；后果；重要性",
+
+  // === 纠正与补偿 ===
+  "redress": "v./n. 纠正；赔偿；救济",
+  "correct": "v./adj. 纠正；正确的；准确的",
+  "fix": "v./n. 固定；修复；解决",
+  "repair": "v./n. 修理；修复；补救",
+  "rectify": "v. 纠正；改正；修正",
+  "amend": "v. 修正；改正；改善",
+  "make up for": "弥补；补偿；赔偿",
+  "compensate": "v. 补偿；赔偿；弥补",
+  "remedy": "n./v. 补救；治疗；纠正",
+
+  // === 清洁与卫生 ===
+  "hygiene": "n. 卫生；卫生学；保健法",
+  "cleanliness": "n. 清洁；清洁度；洁癖",
+  "keep clean": "保持清洁；保持干净",
+
+  // === 混乱与无序 ===
+  "chaos": "n. 混乱；混沌；紊乱",
+  "panic": "n./v./adj. 恐慌；惊慌；恐慌的",
+  "uncontrolled": "adj. 不受控制的；无约束的",
+  "a state of disorder": "混乱状态；无序状态",
+
+  // === 审查与检查 ===
+  "scrutiny": "n. 仔细检查；审查；监督",
+  "close examination": "仔细检查；严密审查",
+  "careful examination of": "仔细检查...；认真审查",
+
+  "obsession": "n. 痴迷；困扰；强迫症",
+  "excessive focus on": "过度关注；过分集中于",
+
+  // === 要求与呼吁 ===
+  "clamor": "n./v. 吵闹；要求；呼吁",
+  "demand": "n./v. 要求；需求；需要",
+  "ask for": "要求；请求；索取",
+  "claim": "v./n. 声称；要求；主张",
+
+  "mortality rate": "死亡率；病死率",
+  "death rate": "死亡率；死亡速率",
+
+  // === 脆弱与虚弱 ===
+  "fragile": "adj. 易碎的；脆弱的；虚弱的",
+  "delicate": "adj. 精美的；脆弱的；微妙的",
+  "unstable": "adj. 不稳定的；动荡的；易变的",
+  "weak": "adj. 虚弱的；软弱的；弱的",
+
+  // === 屈服与投降 ===
+  "succumb": "v. 屈服；死于；被...打败",
+  "give in": "屈服；让步；投降",
+  "submit": "v. 提交；服从；屈服",
+  "yield": "v./n. 屈服；产生；收益；投降",
+  "surrender": "v./n. 投降；放弃；屈服",
+  "cave in": "屈服；塌陷；让步",
+
+  // === 传统与民间 ===
+  "folklore": "n. 民间传说；民俗学；民间传统",
+  "traditional customs": "传统习俗；传统风俗",
+  "widespread ideas": "广泛流传的观念；普遍想法",
+  "local belief": "当地信仰；本土信念",
+  "common beliefs": "共同信仰；普遍信念",
+  "widely accepted": "被广泛接受的；普遍认可的",
+
+  // === 驱逐与取代 ===
+  "dislodge": "v. 逐出；取出；使移动",
+  "knock down": "击倒；拆除；撞倒",
+  "force out": "挤出；逐出；迫使离开",
+  "remove": "v./n. 移除；去掉；搬迁",
+  "displace": "v. 取代；移置；置换",
+
+  // === 无可争议 ===
+  "undisputed": "adj. 无可争议的；无疑的； undisputed的",
+  "undeniable": "adj. 不可否认的；无可争辩的",
+  "unquestionable": "adj. 毫无疑问的；无可置疑的",
+  "beyond doubt": "毫无疑问；不容置疑",
+
+  // === 透明与诚实 ===
+  "transparent": "adj. 透明的；显然的；坦率的",
+  "easy to comprehend": "容易理解的；易懂的",
+  "open and honest": "开放和诚实的；坦诚的",
+
+  // === 聚集与集合 ===
+  "congregate": "v. 聚集；集合；会聚",
+  "gather together": "聚集在一起；集合",
+  "assemble": "v. 集合；聚集；组装",
+
+  // === 激励与动机 ===
+  "incentive": "n./adj. 激励；动机；刺激的",
+  "stimulus": "n. 刺激；激励；促进因素",
+
+  // === 减轻与缓和 ===
+  "mitigate": "v. 减轻；缓和；缓解",
+  "ease off": "减轻；缓和；缓解",
+  "lessen": "v. 减少；减轻；变小",
+  "dampen": "v. 抑制；使潮湿；减弱",
+
+  // === 内在与固有 ===
+  "innate": "adj. 先天的；固有的；天生的",
+  "build-in": "adj. 内置的；固有的；嵌入的",
+  "inborn": "adj. 天生的；先天的；固有的",
+  "natural": "adj. 自然的；天然的；天生的",
+  "unchangeable": "adj. 不可改变的；固定的",
+
+  // === 机密与隐藏 ===
+  "confidential": "adj. 机密的；秘密的；亲信的",
+  "hidden": "adj. 隐藏的；秘密的；神秘的",
+  "secret": "n./adj. 秘密；机密；秘密的",
+  "undisclosed": "adj. 未公开的；保密的；无名的",
+
+  // === 精确与识别 ===
+  "pinpoint": "v./adj./n. 精确找到；精准的；针尖",
+  "find out": "找出；查明；发现",
+  "discover exactly": "确切发现；精确找到",
+
+  // === 缓解与减轻 ===
+  "alleviate": "v. 减轻；缓和；缓解",
+  "ease": "v./n. 减轻；缓解；容易；舒适",
+  "relieve": "v. 减轻；解除；救济",
+
+  // === 尊敬与荣誉 ===
+  "revered": "adj. 受尊敬的；受崇敬的",
+  "respectful": "adj. 恭敬的；有礼貌的；尊重人的",
+  "honorable": "adj. 可敬的；光荣的；荣誉的",
+  "esteemed": "adj. 受尊敬的；被推崇的",
+
+  // === 共生与互利 ===
+  "symbiotic": "adj. 共生的；互利共生的",
+  "partnership": "n. 伙伴关系；合作；合伙",
+  "mutually beneficial": "互利的；互惠的",
+  "interdependent": "adj. 相互依赖的；互相依存的",
+
+  "individual": "adj./n. 个人的；个体的；个人",
+  "one-on-one": "adj./adv. 一对一的；单独的；面对面",
+  "personal": "adj. 个人的；私人的；亲自的",
+  "private": "adj./n. 私人的；私有的；士兵",
+
+  // === 本土与当地 ===
+  "indigenous": "adj. 本土的；土生土长的；土著的",
+  "local": "adj./n. 当地的；本地的；当地人",
+  "native": "adj./n. 本地的；天生的；本地人",
+  "original": "adj./n. 原始的；最初的；原作",
+  "endemic": "adj./n. 地方性的；特有的；地方病",
+
+  // === 边缘与次要 ===
+  "peripheral": "adj. 外围的；次要的；边缘的",
+  "unimportant": "adj. 不重要的；无关紧要的",
+  "minor": "adj./n. 次要的；较小的；未成年人",
+  "marginal": "adj. 边缘的；边际的；微小的",
+  "fringe": "n./adj./v. 边缘；外围；次要的；加边",
+
+  // === 逐步淘汰 ===
+  "phase out": "逐步淘汰；逐步取消；分阶段停止",
+  "gradually eliminate": "逐渐消除；逐步淘汰",
+  "gradually abolish": "逐渐废除；逐步取消",
+
+  // === 损害与危害 ===
+  "compromise": "v./n. 妥协；损害；折中解决",
+  "harm": "n./v. 伤害；损害；危害",
+  "damage": "n./v. 损害；损伤；伤害",
+  "jeopardize": "v. 危及；损害；使陷于危险",
+  "concede": "v. 承认；让步；给予",
+  "settle": "v./n. 解决；定居；安顿；结算",
+  "reach a settlement": "达成和解；达成协议",
+  "agreement": "n. 协议；同意；一致",
+
+  // === 计划与方案 ===
+  "initiative": "n. 倡议；主动性；首创精神",
+  "scheme": "n./v. 计划；方案；阴谋；策划",
+  "project": "n./v. 项目；工程；计划；投射",
+  "program": "n./v. 程序；计划；节目；编程",
+  "a new plan": "一个新计划；新方案",
+
+  // === 附近与邻近 ===
+  "vicinity": "n. 附近；邻近；周边地区",
+  "nearby": "adj./adv. 附近的；在附近",
+  "neighborhood": "n. 邻居；附近；街坊；社区",
+
+  // === 紧迫与紧急 ===
+  "imperative": "adj./n. 必要的；紧急的；命令；祈使句",
+  "pressing": "adj. 紧迫的；紧急的；迫切的",
+  "crucial": "adj. 关键的；决定性的；重要的",
+  "critical": "adj. 批评的；关键的；临界的",
+  "urgent": "adj. 紧急的；紧迫的；急迫的",
+  "vital": "adj. 至关重要的；生死攸关的；有活力的",
+  "things that are obligated": "有义务的事情；必须做的事",
+
+  // === 激增与繁殖 ===
+  "proliferate": "v. 激增；扩散；迅速繁殖",
+  "multiply": "v. 乘；繁殖；增加；倍增",
+  "breed": "v./n. 繁殖；饲养；品种；孕育",
+  "reproduce": "v. 繁殖；复制；再现",
+  "spread": "v./n. 传播；展开；扩散",
+  "propagate": "v. 传播；繁殖；宣传",
+
+  // === 谴责与训斥 ===
+  "chastise": "v. 谴责；惩罚；严厉批评",
+  "speak angrily": "愤怒地说；气愤地讲话",
+  "reprimand": "v./n. 谴责；训斥；惩戒",
+  "rebuke": "v./n. 指责；非难；斥责",
+  "berate": "v. 严厉指责；怒斥；训斥",
+
+  // === 相似与统一 ===
+  "homogeneous": "adj. 同质的；同类的；均匀的",
+  "similar": "adj. 相似的；类似的；相同的",
+  "uniform": "adj./n. 统一的；制服；一致的",
+  "consistent": "adj. 一致的；始终如一的；持续的",
+  "identical": "adj. 同一的；完全相同的",
+};
+
+function getChineseMeaning(word) {
+  if (!word) return '';
+  const trimmed = word.trim();
+  if (CHINESE_DICT[trimmed]) return CHINESE_DICT[trimmed];
+  if (CHINESE_DICT[trimmed.toLowerCase()]) return CHINESE_DICT[trimmed.toLowerCase()];
+  return '';
+}
 let currentSetGroups = [];
 
 function showScreen(screenId) {
@@ -1478,16 +3030,28 @@ function renderStudy() {
   document.getElementById('studyTitle').textContent = setInfo?.name || '';
   document.getElementById('studySubtitle').textContent = setInfo?.description || '';
   document.getElementById('totalGroups').textContent = currentSetGroups.length;
-  
+
   const list = document.getElementById('groupsList');
   list.innerHTML = '';
   currentSetGroups.forEach((group, idx) => {
     const card = document.createElement('div');
     card.className = 'group-card';
     card.innerHTML = `
-      <div class="group-label">第 ${idx + 1} 组</div>
+      <div class="group-label">第 ${idx + 1} 组 · 同义词组</div>
       <div class="group-words">
-        ${group.map(w => `<span class="group-word">${w}</span>`).join('')}
+        ${group.map(w => {
+          const cn = getChineseMeaning(w);
+          const tooltip = cn
+            ? `<div class="tooltip">
+                 <div class="tooltip-cn">${cn}</div>
+                 <div class="tooltip-syn"><span class="tooltip-syn-label">本组同义词:</span> ${group.filter(x => x !== w).slice(0, 5).join(' · ') || '无'}</div>
+               </div>`
+            : `<div class="tooltip">
+                 <div class="tooltip-cn">暂无翻译</div>
+                 <div class="tooltip-syn"><span class="tooltip-syn-label">本组同义词:</span> ${group.filter(x => x !== w).slice(0, 5).join(' · ') || '无'}</div>
+               </div>`;
+          return `<span class="group-word">${w}${tooltip}</span>`;
+        }).join('')}
       </div>
     `;
     list.appendChild(card);
@@ -1894,7 +3458,12 @@ function renderGrid() {
     const btn = document.createElement('button');
     btn.className = 'word-btn' + (usedWords.has(w) ? ' used' : '');
     btn.id = 'wb_' + CSS.escape(w);
-    btn.textContent = w;
+    const cn = getChineseMeaning(w);
+    if (cn && !usedWords.has(w)) {
+      btn.innerHTML = w + `<div class="tooltip" style="pointer-events:none;"><div class="tooltip-cn">${cn}</div></div>`;
+    } else {
+      btn.textContent = w;
+    }
     if (usedWords.has(w)) {
       btn.disabled = true;
     } else {
